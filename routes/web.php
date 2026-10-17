@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\StorefrontController;
+use App\Http\Controllers\CartController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [StorefrontController::class, 'index'])
@@ -15,5 +16,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'dashboard')
         ->name('dashboard');
 });
+
+Route::get('/cart/availability/{product}', [
+    CartController::class,
+    'availability',
+])->whereNumber('product')->name('cart.availability');
 
 require __DIR__.'/settings.php';
