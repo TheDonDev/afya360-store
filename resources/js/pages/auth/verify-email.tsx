@@ -42,5 +42,5 @@ export default function VerifyEmail({ status }: { status?: string }) {
 VerifyEmail.layout = {
     title: 'Email verification',
     description:
-        'Please verify your email address by clicking on the link we just emailed to you.',
+        'Check your inbox for the Afya360 verification link. Verify your email to unlock security settings and finish setting up your account.',
 };

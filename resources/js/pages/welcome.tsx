@@ -1,8 +1,6 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import {
     ArrowRight,
-    Check,
-    ChevronDown,
     Heart,
     Leaf,
     Menu,
@@ -15,7 +13,7 @@ import {
     UserRound,
     X,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useCart } from '@/components/storefront/cart-provider';
 
 type Category =
@@ -41,12 +39,9 @@ type Product = {
 
 type WelcomeProps = {
     products: Product[];
-};
-
-type Department = {
-    name: string;
-    category: Category;
-    subcategories: string[];
+    auth: {
+        user: { name: string; email: string } | null;
+    };
 };
 
 const categories: Category[] = [
@@ -55,45 +50,6 @@ const categories: Category[] = [
     'Cosmetics',
     'Hair & Body',
     'Supplements',
-];
-
-const departments: Department[] = [
-    {
-        name: 'Vitamins & Supplements',
-        category: 'Supplements',
-        subcategories: [
-            'Multivitamins', 'Vitamin A', 'Vitamin B', 'Vitamin C',
-            'Vitamin D', 'Vitamin E', 'Calcium', 'Iron', 'Magnesium',
-            'Potassium', 'Selenium', 'Zinc', 'Amino Acids', 'Botanicals',
-            'Omegas', 'Antioxidants', 'Probiotics', 'Enzymes', 'Fiber',
-            'Collagen', 'Glucosamine', 'Melatonin', 'Mushrooms',
-        ],
-    },
-    {
-        name: 'Beauty & Lifestyle',
-        category: 'Cosmetics',
-        subcategories: [
-            'Baby', 'Bath', 'Beauty Supplements', 'Body', 'Carrier Oils',
-            'Deodorants', 'Essential Oils', 'Eyes', 'Face', 'Hands & Feet',
-            'Lip Balms', 'Hair', 'Toothpaste & Mouthwash',
-        ],
-    },
-    {
-        name: 'Food & Drink',
-        category: 'Supplements',
-        subcategories: [
-            'Cocoa', 'Juices', 'Manuka Honey', 'Oils', 'Sweeteners',
-            'Superfoods', 'Vinegars', 'Sugar-Free Chewing Gum',
-        ],
-    },
-    {
-        name: 'Sports',
-        category: 'Supplements',
-        subcategories: [
-            'Amino Acids', 'Creatine', 'Electrolytes', 'Pain Relief',
-            'Proteins', 'Sports Nutrition',
-        ],
-    },
 ];
 
 const getCategoryLabel = (item: Category) => {
@@ -108,10 +64,10 @@ const getCategoryLabel = (item: Category) => {
     return item;
 };
 
-const formatPrice = (price: number) =>
-    `KSh ${price.toLocaleString('en-KE')}`;
+const formatPrice = (price: number) => `KSh ${price.toLocaleString('en-KE')}`;
 
 export default function Welcome({ products }: WelcomeProps) {
+    const { auth } = usePage<WelcomeProps>().props;
     const [category, setCategory] = useState<Category>('All');
     const [subcategory, setSubcategory] = useState<string | null>(null);
     const [brand, setBrand] = useState<string>('All');
@@ -126,8 +82,8 @@ export default function Welcome({ products }: WelcomeProps) {
         return products.filter((product) => {
             const matchesCategory =
                 category === 'All' || product.category === category;
-            const subcategorySource = `${product.source_category ?? ''} ${product.name}`
-                .toLowerCase();
+            const subcategorySource =
+                `${product.source_category ?? ''} ${product.name}`.toLowerCase();
             const matchesSubcategory =
                 !subcategory ||
                 subcategorySource.includes(subcategory.toLowerCase());
@@ -149,9 +105,52 @@ export default function Welcome({ products }: WelcomeProps) {
     }, [brand, category, products, search, subcategory]);
 
     const brands = useMemo(
-        () => [...new Set(products.map((product) => product.brand).filter(Boolean))].sort(),
+        () =>
+            [
+                ...new Set(
+                    products.map((product) => product.brand).filter(Boolean),
+                ),
+            ].sort(),
         [products],
     );
+
+    const [currentSlide, setCurrentSlide] = useState(0);
+
+    const heroSlides = [
+        {
+            title: 'Feel good in the skin you\'re in.',
+            subtitle: 'Thoughtfully chosen beauty and wellness essentials for your everyday self-care ritual.',
+            tagline: 'YOUR DAILY RITUAL, REIMAGINED',
+            footer: 'YOUR BEAUTY. YOUR WELLNESS. YOUR WAY.',
+            image: 'https://images.unsplash.com/photo-1601049541289-9b1b7bbbfe19?auto=format&fit=crop&w=1800&q=90',
+            accent: 'SMALL RITUALS.\nEVERYDAY CONFIDENCE.',
+        },
+        {
+            title: 'Glow from within.',
+            subtitle: 'Discover serums, supplements and skincare that nourish your skin at the cellular level.',
+            tagline: 'RADIANCE, REIMAGINED',
+            footer: 'YOUR BEAUTY. YOUR WELLNESS. YOUR WAY.',
+            image: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=1800&q=90',
+            accent: 'NOURISH.\nTRANSFORM.',
+        },
+        {
+            title: 'Self-care, simplified.',
+            subtitle: 'From morning cleansers to evening supplements, build your routine in minutes.',
+            tagline: 'YOUR EVERYDAY RITUAL',
+            footer: 'YOUR BEAUTY. YOUR WELLNESS. YOUR WAY.',
+            image: 'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=1800&q=90',
+            accent: 'CARE.\nREPEAT.',
+        },
+    ];
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+        }, 6000);
+        return () => clearInterval(timer);
+    }, [heroSlides.length]);
+
+    const slide = heroSlides[currentSlide];
 
     function toggleWishlist(productId: number) {
         setWishlist((current) =>
@@ -272,8 +271,14 @@ export default function Welcome({ products }: WelcomeProps) {
                             </button>
 
                             <Link
-                                href="/login"
-                                aria-label="Customer account"
+                                href={
+                                    auth.user ? '/settings/profile' : '/login'
+                                }
+                                aria-label={
+                                    auth.user
+                                        ? 'Profile settings'
+                                        : 'Sign in to your account'
+                                }
                                 className="hidden rounded-full p-2.5 transition hover:bg-[#f2eee6] sm:inline-flex"
                             >
                                 <UserRound size={19} strokeWidth={1.6} />
@@ -285,12 +290,9 @@ export default function Welcome({ products }: WelcomeProps) {
                                 onClick={openCart}
                                 className="relative rounded-full p-2.5 transition hover:bg-[#f2eee6]"
                             >
-                                <ShoppingBag
-                                    size={20}
-                                    strokeWidth={1.6}
-                                />
+                                <ShoppingBag size={20} strokeWidth={1.6} />
                                 {cartCount > 0 && (
-                                    <span className="absolute -right-0.5 -top-0.5 flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-[#244c3b] px-1 text-[9px] font-semibold text-white">
+                                    <span className="absolute -top-0.5 -right-0.5 flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-[#244c3b] px-1 text-[9px] font-semibold text-white">
                                         {cartCount}
                                     </span>
                                 )}
@@ -323,33 +325,47 @@ export default function Welcome({ products }: WelcomeProps) {
                 </header>
 
                 <main>
-                    {/* Hero */}
+                    {/* Hero - Animated Carousel */}
                     <section
                         id="home"
                         className="mx-auto max-w-[1440px] px-4 pt-5 sm:px-8 sm:pt-8 lg:px-12"
                     >
                         <div className="relative isolate flex min-h-[480px] overflow-hidden rounded-[4px] bg-[#eae5d9] sm:min-h-[530px] lg:min-h-[580px]">
-                            <img
-                                src="https://images.unsplash.com/photo-1601049541289-9b1b7bbbfe19?auto=format&fit=crop&w=1800&q=90"
-                                alt="Beauty and skincare products arranged in a natural setting"
-                                className="absolute inset-0 -z-20 h-full w-full object-cover object-center"
-                            />
+                            {heroSlides.map((s, index) => (
+                                <img
+                                    key={s.image}
+                                    src={s.image}
+                                    alt="Beauty and skincare products arranged in a natural setting"
+                                    className={`absolute inset-0 -z-20 h-full w-full object-cover object-center transition-opacity duration-1000 ${
+                                        index === currentSlide
+                                            ? 'opacity-100'
+                                            : 'opacity-0'
+                                    }`}
+                                />
+                            ))}
                             <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#f5f0e7]/95 via-[#f5f0e7]/75 to-[#f5f0e7]/10" />
 
                             <div className="flex max-w-2xl flex-col items-start justify-center px-6 py-14 sm:px-12 lg:px-20 lg:py-20">
-                                <div className="mb-7 flex items-center gap-2 text-[10px] font-medium tracking-[0.24em] text-[#44634e] sm:text-xs">
+                                <div
+                                    key={currentSlide}
+                                    className="mb-7 flex items-center gap-2 text-[10px] font-medium tracking-[0.24em] text-[#44634e] sm:text-xs"
+                                >
                                     <Sparkles size={15} strokeWidth={1.5} />
-                                    YOUR DAILY RITUAL, REIMAGINED
+                                    {slide.tagline}
                                 </div>
 
-                                <h1 className="max-w-[600px] font-serif text-[45px] leading-[1.04] tracking-[-0.045em] text-[#244c3b] sm:text-6xl lg:text-[76px]">
-                                    Feel good in the skin you're in.
+                                <h1
+                                    key={`title-${currentSlide}`}
+                                    className="max-w-[600px] font-serif text-[45px] leading-[1.04] tracking-[-0.045em] text-[#244c3b] sm:text-6xl lg:text-[76px]"
+                                >
+                                    {slide.title}
                                 </h1>
 
-                                <p className="mt-6 max-w-[390px] text-sm leading-7 text-[#56594f] sm:text-base sm:leading-8">
-                                    Thoughtfully chosen beauty and wellness
-                                    essentials for your everyday self-care
-                                    ritual.
+                                <p
+                                    key={`subtitle-${currentSlide}`}
+                                    className="mt-6 max-w-[390px] text-sm leading-7 text-[#56594f] sm:text-base sm:leading-8"
+                                >
+                                    {slide.subtitle}
                                 </p>
 
                                 <a
@@ -365,14 +381,34 @@ export default function Welcome({ products }: WelcomeProps) {
 
                                 <div className="mt-9 flex items-center gap-2 text-[10px] tracking-[0.1em] text-[#5d6257] sm:text-xs">
                                     <Leaf size={15} />
-                                    YOUR BEAUTY. YOUR WELLNESS. YOUR WAY.
+                                    {slide.footer}
                                 </div>
                             </div>
 
-                            <div className="absolute bottom-6 right-6 hidden max-w-[150px] border-l border-[#244c3b]/40 pl-4 text-[10px] leading-5 tracking-[0.12em] text-[#244c3b] sm:block lg:bottom-10 lg:right-10">
-                                SMALL RITUALS.
-                                <br />
-                                EVERYDAY CONFIDENCE.
+                            <div className="absolute right-6 bottom-6 hidden max-w-[150px] border-l border-[#244c3b]/40 pl-4 text-[10px] leading-5 tracking-[0.12em] text-[#244c3b] sm:block lg:right-10 lg:bottom-10">
+                                {slide.accent.split('\n').map((line, i) => (
+                                    <span key={i}>
+                                        {line}
+                                        {i < slide.accent.split('\n').length - 1 && <br />}
+                                    </span>
+                                ))}
+                            </div>
+
+                            {/* Slide indicators */}
+                            <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
+                                {heroSlides.map((_, index) => (
+                                    <button
+                                        key={index}
+                                        type="button"
+                                        aria-label={`Go to slide ${index + 1}`}
+                                        onClick={() => setCurrentSlide(index)}
+                                        className={`h-1.5 w-1.5 rounded-full transition-all duration-300 ${
+                                            index === currentSlide
+                                                ? 'w-6 bg-[#244c3b]'
+                                                : 'bg-[#244c3b]/40'
+                                        }`}
+                                    />
+                                ))}
                             </div>
                         </div>
                     </section>
@@ -460,15 +496,14 @@ export default function Welcome({ products }: WelcomeProps) {
                                         Everyday favourites
                                     </h2>
                                     <p className="mt-3 text-sm text-[#77786e]">
-                                        Find something special for your
-                                        routine.
+                                        Find something special for your routine.
                                     </p>
                                 </div>
 
                                 <div className="relative w-full md:max-w-[280px]">
                                     <Search
                                         size={17}
-                                        className="absolute left-4 top-1/2 -translate-y-1/2 text-[#77786e]"
+                                        className="absolute top-1/2 left-4 -translate-y-1/2 text-[#77786e]"
                                     />
                                     <input
                                         id="product-search"
@@ -478,7 +513,7 @@ export default function Welcome({ products }: WelcomeProps) {
                                             setSearch(event.target.value)
                                         }
                                         placeholder="Search products..."
-                                        className="w-full border border-[#dedbd2] bg-white py-3 pl-11 pr-4 text-sm outline-none transition placeholder:text-[#9a9b92] focus:border-[#244c3b]"
+                                        className="w-full border border-[#dedbd2] bg-white py-3 pr-4 pl-11 text-sm transition outline-none placeholder:text-[#9a9b92] focus:border-[#244c3b]"
                                     />
                                 </div>
                             </div>
@@ -499,26 +534,50 @@ export default function Welcome({ products }: WelcomeProps) {
                                     >
                                         {item === 'All'
                                             ? 'ALL PRODUCTS'
-                                            : getCategoryLabel(item).toUpperCase()}
+                                            : getCategoryLabel(
+                                                  item,
+                                              ).toUpperCase()}
                                     </button>
                                 ))}
                             </div>
 
                             <div className="mt-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                                 <div className="flex flex-wrap gap-2">
-                                    {(category === 'Skincare' || category === 'Hair & Body' || category === 'Supplements' || category === 'Cosmetics') && (
+                                    {(category === 'Skincare' ||
+                                        category === 'Hair & Body' ||
+                                        category === 'Supplements' ||
+                                        category === 'Cosmetics') && (
                                         <>
                                             {category === 'Skincare' && (
                                                 <>
-                                                    {['All skincare', 'Face Care', 'Cleansers', 'Moisturisers', 'Serums', 'Sunscreen', 'Body Care'].map((item) => {
-                                                        const isAll = item === 'All skincare';
-                                                        const isActive = isAll ? !subcategory : subcategory === item;
+                                                    {[
+                                                        'All skincare',
+                                                        'Face Care',
+                                                        'Cleansers',
+                                                        'Moisturisers',
+                                                        'Serums',
+                                                        'Sunscreen',
+                                                        'Body Care',
+                                                    ].map((item) => {
+                                                        const isAll =
+                                                            item ===
+                                                            'All skincare';
+                                                        const isActive = isAll
+                                                            ? !subcategory
+                                                            : subcategory ===
+                                                              item;
 
                                                         return (
                                                             <button
                                                                 key={item}
                                                                 type="button"
-                                                                onClick={() => setSubcategory(isAll ? null : item)}
+                                                                onClick={() =>
+                                                                    setSubcategory(
+                                                                        isAll
+                                                                            ? null
+                                                                            : item,
+                                                                    )
+                                                                }
                                                                 className={`rounded-full border px-3 py-1.5 text-[10px] font-medium tracking-[0.05em] transition ${
                                                                     isActive
                                                                         ? 'border-[#244c3b] bg-[#244c3b] text-white'
@@ -534,15 +593,34 @@ export default function Welcome({ products }: WelcomeProps) {
 
                                             {category === 'Hair & Body' && (
                                                 <>
-                                                    {['All hair & body', 'Hair Care', 'Shampoo & Conditioner', 'Treatments & Masks', 'Body Care', 'Bath & Shower', 'Deodorants'].map((item) => {
-                                                        const isAll = item === 'All hair & body';
-                                                        const isActive = isAll ? !subcategory : subcategory === item;
+                                                    {[
+                                                        'All hair & body',
+                                                        'Hair Care',
+                                                        'Shampoo & Conditioner',
+                                                        'Treatments & Masks',
+                                                        'Body Care',
+                                                        'Bath & Shower',
+                                                        'Deodorants',
+                                                    ].map((item) => {
+                                                        const isAll =
+                                                            item ===
+                                                            'All hair & body';
+                                                        const isActive = isAll
+                                                            ? !subcategory
+                                                            : subcategory ===
+                                                              item;
 
                                                         return (
                                                             <button
                                                                 key={item}
                                                                 type="button"
-                                                                onClick={() => setSubcategory(isAll ? null : item)}
+                                                                onClick={() =>
+                                                                    setSubcategory(
+                                                                        isAll
+                                                                            ? null
+                                                                            : item,
+                                                                    )
+                                                                }
                                                                 className={`rounded-full border px-3 py-1.5 text-[10px] font-medium tracking-[0.05em] transition ${
                                                                     isActive
                                                                         ? 'border-[#244c3b] bg-[#244c3b] text-white'
@@ -558,11 +636,18 @@ export default function Welcome({ products }: WelcomeProps) {
 
                                             {category === 'Supplements' && (
                                                 <>
-                                                    {['All supplement types', 'Vitamins & Supplements', 'Food & Drink', 'Sports'].map((item) => {
+                                                    {[
+                                                        'All supplement types',
+                                                        'Vitamins & Supplements',
+                                                        'Food & Drink',
+                                                        'Sports',
+                                                    ].map((item) => {
                                                         const isActive =
-                                                            item === 'All supplement types'
+                                                            item ===
+                                                            'All supplement types'
                                                                 ? !subcategory
-                                                                : subcategory === item;
+                                                                : subcategory ===
+                                                                  item;
 
                                                         return (
                                                             <button
@@ -570,7 +655,10 @@ export default function Welcome({ products }: WelcomeProps) {
                                                                 type="button"
                                                                 onClick={() => {
                                                                     setSubcategory(
-                                                                        item === 'All supplement types' ? null : item,
+                                                                        item ===
+                                                                            'All supplement types'
+                                                                            ? null
+                                                                            : item,
                                                                     );
                                                                 }}
                                                                 className={`rounded-full border px-3 py-1.5 text-[10px] font-medium tracking-[0.05em] transition ${
@@ -588,14 +676,26 @@ export default function Welcome({ products }: WelcomeProps) {
 
                                             {category === 'Cosmetics' && (
                                                 <>
-                                                    {['Beauty & Lifestyle', 'Cosmetics'].map((item) => {
-                                                        const isActive = subcategory === item || (!subcategory && item === 'Cosmetics');
+                                                    {[
+                                                        'Beauty & Lifestyle',
+                                                        'Cosmetics',
+                                                    ].map((item) => {
+                                                        const isActive =
+                                                            subcategory ===
+                                                                item ||
+                                                            (!subcategory &&
+                                                                item ===
+                                                                    'Cosmetics');
 
                                                         return (
                                                             <button
                                                                 key={item}
                                                                 type="button"
-                                                                onClick={() => setSubcategory(item)}
+                                                                onClick={() =>
+                                                                    setSubcategory(
+                                                                        item,
+                                                                    )
+                                                                }
                                                                 className={`rounded-full border px-3 py-1.5 text-[10px] font-medium tracking-[0.05em] transition ${
                                                                     isActive
                                                                         ? 'border-[#244c3b] bg-[#244c3b] text-white'
@@ -613,10 +713,14 @@ export default function Welcome({ products }: WelcomeProps) {
                                 </div>
 
                                 <label className="ml-auto flex items-center gap-2 rounded-full border border-[#dedbd2] bg-[#f7f5ef] px-3 py-2 text-xs text-[#5b6057]">
-                                    <span className="font-semibold text-[#244c3b]">Brand</span>
+                                    <span className="font-semibold text-[#244c3b]">
+                                        Brand
+                                    </span>
                                     <select
                                         value={brand}
-                                        onChange={(event) => setBrand(event.target.value)}
+                                        onChange={(event) =>
+                                            setBrand(event.target.value)
+                                        }
                                         className="bg-transparent text-xs text-[#5b6057] outline-none"
                                     >
                                         <option value="All">All brands</option>
@@ -632,9 +736,15 @@ export default function Welcome({ products }: WelcomeProps) {
                             {(subcategory || brand !== 'All') && (
                                 <div className="mt-4 flex items-center gap-3 text-xs text-[#77786e]">
                                     <span>
-                                        {subcategory ? `Category: ${subcategory}` : ''}
-                                        {subcategory && brand !== 'All' ? ' · ' : ''}
-                                        {brand !== 'All' ? `Brand: ${brand}` : ''}
+                                        {subcategory
+                                            ? `Category: ${subcategory}`
+                                            : ''}
+                                        {subcategory && brand !== 'All'
+                                            ? ' · '
+                                            : ''}
+                                        {brand !== 'All'
+                                            ? `Brand: ${brand}`
+                                            : ''}
                                     </span>
                                     <button
                                         type="button"
@@ -679,7 +789,7 @@ export default function Welcome({ products }: WelcomeProps) {
                                             )}
 
                                             {product.label && (
-                                                <span className="absolute left-2 top-2 bg-[#fffdf9] px-2 py-1 text-[8px] font-semibold tracking-[0.12em] text-[#244c3b] sm:left-3 sm:top-3 sm:text-[9px]">
+                                                <span className="absolute top-2 left-2 bg-[#fffdf9] px-2 py-1 text-[8px] font-semibold tracking-[0.12em] text-[#244c3b] sm:top-3 sm:left-3 sm:text-[9px]">
                                                     {product.label}
                                                 </span>
                                             )}
@@ -687,14 +797,16 @@ export default function Welcome({ products }: WelcomeProps) {
                                             <button
                                                 type="button"
                                                 aria-label={
-                                                    wishlist.includes(product.id)
+                                                    wishlist.includes(
+                                                        product.id,
+                                                    )
                                                         ? 'Remove from wishlist'
                                                         : 'Add to wishlist'
                                                 }
                                                 onClick={() =>
                                                     toggleWishlist(product.id)
                                                 }
-                                                className="absolute right-2 top-2 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 transition hover:bg-white sm:right-3 sm:top-3"
+                                                className="absolute top-2 right-2 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 transition hover:bg-white sm:top-3 sm:right-3"
                                             >
                                                 <Heart
                                                     size={17}
@@ -725,7 +837,7 @@ export default function Welcome({ products }: WelcomeProps) {
                                             <p className="text-[9px] tracking-[0.12em] text-[#8b8c81] sm:text-[10px]">
                                                 {product.brand.toUpperCase()}
                                             </p>
-                                            <h3 className="mt-1 min-h-10 line-clamp-2 text-xs leading-5 sm:text-sm">
+                                            <h3 className="mt-1 line-clamp-2 min-h-10 text-xs leading-5 sm:text-sm">
                                                 <Link
                                                     href={`/products/${product.slug}`}
                                                     className="text-[#33382f] hover:text-[#244c3b]"
@@ -735,20 +847,21 @@ export default function Welcome({ products }: WelcomeProps) {
                                             </h3>
 
                                             <div className="mt-1.5 text-[10px] text-[#77786e]">
-                                                {product.stock_status === 'limited'
-                                                    ? product.stock_quantity === null
+                                                {product.stock_status ===
+                                                'limited'
+                                                    ? product.stock_quantity ===
+                                                      null
                                                         ? 'Limited stock'
                                                         : `Only ${product.stock_quantity} left`
-                                                    : product.stock_status === 'in_stock'
+                                                    : product.stock_status ===
+                                                        'in_stock'
                                                       ? 'In stock'
                                                       : 'Availability varies'}
                                             </div>
 
                                             <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
                                                 <span className="text-sm font-semibold text-[#244c3b] sm:text-base">
-                                                    {formatPrice(
-                                                        product.price,
-                                                    )}
+                                                    {formatPrice(product.price)}
                                                 </span>
                                                 <button
                                                     type="button"
@@ -820,9 +933,9 @@ export default function Welcome({ products }: WelcomeProps) {
                             </h2>
                             <p className="mt-5 max-w-md text-sm leading-7 text-white/75">
                                 Afya360 brings beauty and wellness essentials
-                                together in one thoughtful shopping
-                                experience. Find products that fit your
-                                routine, your needs and your everyday life.
+                                together in one thoughtful shopping experience.
+                                Find products that fit your routine, your needs
+                                and your everyday life.
                             </p>
                             <a
                                 href="#shop"
@@ -891,8 +1004,8 @@ export default function Welcome({ products }: WelcomeProps) {
                                         Personalised care
                                     </h3>
                                     <p className="mt-1 text-[11px] leading-5 text-[#77786e]">
-                                        Get in touch for help choosing
-                                        suitable products.
+                                        Get in touch for help choosing suitable
+                                        products.
                                     </p>
                                 </div>
                             </div>
@@ -932,9 +1045,7 @@ export default function Welcome({ products }: WelcomeProps) {
                                         onClick={() => chooseCategory(item)}
                                         className="block transition hover:text-[#244c3b]"
                                     >
-                                        {item === 'All'
-                                            ? 'All products'
-                                            : item}
+                                        {item === 'All' ? 'All products' : item}
                                     </button>
                                 ))}
                             </div>
@@ -960,9 +1071,7 @@ export default function Welcome({ products }: WelcomeProps) {
                                 <span className="block">
                                     Delivery & returns
                                 </span>
-                                <span className="block">
-                                    Privacy policy
-                                </span>
+                                <span className="block">Privacy policy</span>
                                 <span className="block">Terms of service</span>
                             </div>
                         </div>
@@ -971,14 +1080,13 @@ export default function Welcome({ products }: WelcomeProps) {
                     <div className="border-t border-[#e5e1d8] px-5 py-5 text-center text-[10px] tracking-[0.06em] text-[#898a80] sm:px-8 sm:text-left">
                         <div className="mx-auto flex max-w-[1440px] flex-col justify-between gap-2 sm:flex-row">
                             <p>
-                                © {new Date().getFullYear()} Afya360 Cosmetics
-                                & Supplements. All rights reserved.
+                                © {new Date().getFullYear()} Afya360 Cosmetics &
+                                Supplements. All rights reserved.
                             </p>
                             <p>MADE FOR YOUR EVERYDAY WELLNESS.</p>
                         </div>
                     </div>
                 </footer>
-
             </div>
         </>
     );
