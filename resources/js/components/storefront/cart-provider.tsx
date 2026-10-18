@@ -64,6 +64,7 @@ type CartContextValue = {
     addItem: (product: CartProductInput) => Promise<void>;
     changeQuantity: (id: number, change: number) => Promise<void>;
     removeItem: (id: number) => void;
+    clearCart: () => void;
     clearNotice: () => void;
 };
 
@@ -92,10 +93,7 @@ async function fetchAvailability(id: number): Promise<Availability> {
     return data as Availability;
 }
 
-function applyAvailability(
-    item: CartItem,
-    stock: Availability,
-): CartItem {
+function applyAvailability(item: CartItem, stock: Availability): CartItem {
     return {
         ...item,
         slug: stock.slug,
@@ -110,10 +108,7 @@ function applyAvailability(
         maxQuantity: stock.max_quantity,
         availabilityMessage: stock.message,
         quantity: stock.purchasable
-            ? Math.min(
-                  item.quantity,
-                  stock.max_quantity,
-              )
+            ? Math.min(item.quantity, stock.max_quantity)
             : item.quantity,
     };
 }
@@ -136,18 +131,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 const parsed: unknown = raw ? JSON.parse(raw) : [];
 
                 if (Array.isArray(parsed)) {
-                    restored = parsed.filter(
-                        (item): item is CartItem =>
-                            typeof item?.id === 'number' &&
-                            typeof item?.quantity === 'number' &&
-                            item.quantity > 0 &&
-                            typeof item?.name === 'string',
-                    ).map((item) => ({
-                        ...item,
-                        available: false,
-                        maxQuantity: 0,
-                        availabilityMessage: 'Checking current stock…',
-                    }));
+                    restored = parsed
+                        .filter(
+                            (item): item is CartItem =>
+                                typeof item?.id === 'number' &&
+                                typeof item?.quantity === 'number' &&
+                                item.quantity > 0 &&
+                                typeof item?.name === 'string',
+                        )
+                        .map((item) => ({
+                            ...item,
+                            available: false,
+                            maxQuantity: 0,
+                            availabilityMessage: 'Checking current stock…',
+                        }));
                 }
             } catch {
                 restored = [];
@@ -191,10 +188,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         if (!hydrated) return;
 
         try {
-            window.localStorage.setItem(
-                STORAGE_KEY,
-                JSON.stringify(items),
-            );
+            window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
         } catch {
             setNotice('Your browser could not save the cart on this device.');
         }
@@ -204,9 +198,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setIsOpen(true);
         setNotice(null);
         setBusyIds((current) =>
-            current.includes(product.id)
-                ? current
-                : [...current, product.id],
+            current.includes(product.id) ? current : [...current, product.id],
         );
 
         try {
@@ -221,10 +213,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
             const existing = items.find((item) => item.id === product.id);
             const requestedQuantity = (existing?.quantity ?? 0) + 1;
-            const quantity = Math.min(
-                requestedQuantity,
-                stock.max_quantity,
-            );
+            const quantity = Math.min(requestedQuantity, stock.max_quantity);
 
             setItems((current) => {
                 const found = current.find((item) => item.id === product.id);
@@ -268,9 +257,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
                     : 'Could not verify stock. Please try again.',
             );
         } finally {
-            setBusyIds((current) =>
-                current.filter((id) => id !== product.id),
-            );
+            setBusyIds((current) => current.filter((id) => id !== product.id));
         }
     }
 
@@ -307,9 +294,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             if (!stock.purchasable || stock.max_quantity < 1) {
                 setItems((current) =>
                     current.map((item) =>
-                        item.id === id
-                            ? applyAvailability(item, stock)
-                            : item,
+                        item.id === id ? applyAvailability(item, stock) : item,
                     ),
                 );
                 setNotice(
@@ -319,10 +304,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
             }
 
             const requestedQuantity = currentItem.quantity + change;
-            const quantity = Math.min(
-                requestedQuantity,
-                stock.max_quantity,
-            );
+            const quantity = Math.min(requestedQuantity, stock.max_quantity);
 
             setItems((current) =>
                 current.map((item) =>
@@ -366,6 +348,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setItems((current) => current.filter((item) => item.id !== id));
     }
 
+    function clearCart() {
+        setItems([]);
+        setNotice(null);
+    }
+
     const value: CartContextValue = {
         items,
         itemCount: items.reduce((sum, item) => sum + item.quantity, 0),
@@ -379,6 +366,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         addItem,
         changeQuantity,
         removeItem,
+        clearCart,
         clearNotice: () => setNotice(null),
     };
 
@@ -555,7 +543,9 @@ function CartDrawer({ busyIds }: { busyIds: number[] }) {
                                                 <button
                                                     type="button"
                                                     aria-label={`Increase ${item.name} quantity`}
-                                                    disabled={busyIds.includes(item.id)}
+                                                    disabled={busyIds.includes(
+                                                        item.id,
+                                                    )}
                                                     onClick={() =>
                                                         void changeQuantity(
                                                             item.id,
@@ -571,7 +561,9 @@ function CartDrawer({ busyIds }: { busyIds: number[] }) {
                                             <button
                                                 type="button"
                                                 aria-label={`Remove ${item.name}`}
-                                                onClick={() => removeItem(item.id)}
+                                                onClick={() =>
+                                                    removeItem(item.id)
+                                                }
                                                 className="p-2 text-[#898a80] hover:text-red-700"
                                             >
                                                 <Trash2 size={15} />
@@ -604,19 +596,33 @@ function CartDrawer({ busyIds }: { busyIds: number[] }) {
                         <p className="mt-2 text-xs leading-5 text-[#77786e]">
                             Delivery charges will be calculated at checkout.
                         </p>
-                        <button
-                            type="button"
-                            disabled
-                            className="mt-5 flex w-full items-center justify-center gap-3 bg-[#244c3b] px-5 py-4 text-xs font-semibold tracking-[0.13em] text-white opacity-60"
-                            title="Checkout will be enabled after order and payment integration."
-                        >
-                            CHECKOUT COMING SOON
-                            <ArrowRight size={16} />
-                        </button>
+                        {items.every(
+                            (item) =>
+                                item.available &&
+                                item.quantity <= item.maxQuantity,
+                        ) ? (
+                            <Link
+                                href="/checkout"
+                                onClick={closeCart}
+                                className="mt-5 flex w-full items-center justify-center gap-3 bg-[#244c3b] px-5 py-4 text-xs font-semibold tracking-[0.13em] text-white transition hover:bg-[#183a2b]"
+                            >
+                                CONTINUE TO CHECKOUT
+                                <ArrowRight size={16} />
+                            </Link>
+                        ) : (
+                            <button
+                                type="button"
+                                disabled
+                                className="mt-5 flex w-full items-center justify-center gap-3 bg-[#244c3b] px-5 py-4 text-xs font-semibold tracking-[0.13em] text-white opacity-50"
+                                title="Remove unavailable items or update quantities before checkout."
+                            >
+                                REVIEW UNAVAILABLE ITEMS
+                                <ArrowRight size={16} />
+                            </button>
+                        )}
                         <p className="mt-3 text-center text-[10px] text-[#898a80]">
-                            Stock is checked when you add or increase a
-                            product. It is not reserved until checkout is
-                            implemented.
+                            Stock and prices are checked again when you place
+                            your order.
                         </p>
                     </div>
                 )}

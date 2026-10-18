@@ -1,7 +1,8 @@
 <?php
 
-use App\Http\Controllers\StorefrontController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\StorefrontController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [StorefrontController::class, 'index'])
@@ -21,5 +22,14 @@ Route::get('/cart/availability/{product}', [
     CartController::class,
     'availability',
 ])->whereNumber('product')->name('cart.availability');
+
+Route::get('/checkout', [CheckoutController::class, 'create'])
+    ->name('checkout.create');
+Route::post('/checkout', [CheckoutController::class, 'store'])
+    ->name('checkout.store');
+Route::get('/checkout/confirmation/{order:reference}', [
+    CheckoutController::class,
+    'confirmation',
+])->name('checkout.confirmation');
 
 require __DIR__.'/settings.php';

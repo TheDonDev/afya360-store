@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\OrderItem;
 use App\Models\Product;
 use Illuminate\Http\JsonResponse;
 
@@ -23,7 +24,13 @@ class CartController extends Controller
             ], 404);
         }
 
-        $quantity = $item->stock_quantity;
+        $reservedQuantity = OrderItem::query()
+            ->where('product_id', $item->id)
+            ->whereHas('order', fn ($query) => $query
+                ->where('status', 'pending')
+                ->where('reservation_expires_at', '>', now()))
+            ->sum('quantity');
+        $quantity = max(0, (int) ($item->stock_quantity ?? 0) - $reservedQuantity);
         $verifiedStatus = in_array(
             $item->stock_status,
             ['in_stock', 'limited'],
@@ -33,7 +40,7 @@ class CartController extends Controller
         // A status label alone is not enough: we require a
         // known, positive quantity before allowing a purchase.
         $purchasable = $verifiedStatus
-            && $quantity !== null
+            && $item->stock_quantity !== null
             && $quantity > 0;
 
         $maxQuantity = $purchasable
