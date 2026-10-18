@@ -1,6 +1,8 @@
 <?php
 
 use App\Models\User;
+use App\Notifications\SuccessfulSignInNotification;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\RateLimiter;
 use Laravel\Fortify\Features;
 
@@ -20,6 +22,18 @@ test('users can authenticate using the login screen', function () {
 
     $this->assertAuthenticated();
     $response->assertRedirect(route('home', absolute: false));
+});
+
+test('successful sign-ins queue an email security alert', function () {
+    Notification::fake();
+    $user = User::factory()->create();
+
+    $this->post(route('login.store'), [
+        'email' => $user->email,
+        'password' => 'password',
+    ])->assertRedirect(route('home', absolute: false));
+
+    Notification::assertSentTo($user, SuccessfulSignInNotification::class);
 });
 
 test('users with two factor enabled are redirected to two factor challenge', function () {

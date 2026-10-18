@@ -15,14 +15,34 @@ import PasskeyVerify from '@/components/passkey-verify';
 type Props = {
     status?: string;
     canResetPassword: boolean;
+    googleEnabled: boolean;
 };
 
-export default function Login({ status, canResetPassword }: Props) {
+export default function Login({
+    status,
+    canResetPassword,
+    googleEnabled,
+}: Props) {
     return (
         <>
             <Head title="Log in" />
 
             <PasskeyVerify />
+
+            {googleEnabled && (
+                <a
+                    href="/auth/google/redirect"
+                    className="flex h-10 w-full items-center justify-center gap-3 border border-input bg-background text-sm font-medium transition hover:bg-accent"
+                >
+                    <span
+                        aria-hidden="true"
+                        className="font-bold text-[#4285f4]"
+                    >
+                        G
+                    </span>
+                    Continue with Google
+                </a>
+            )}
 
             <Form
                 {...store.form()}

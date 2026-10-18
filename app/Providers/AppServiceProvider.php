@@ -2,9 +2,12 @@
 
 namespace App\Providers;
 
+use App\Listeners\SendSignInAlert;
 use Carbon\CarbonImmutable;
+use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -31,6 +34,8 @@ class AppServiceProvider extends ServiceProvider
      */
     protected function configureDefaults(): void
     {
+        Event::listen(Login::class, SendSignInAlert::class);
+
         Date::use(CarbonImmutable::class);
 
         DB::prohibitDestructiveCommands(

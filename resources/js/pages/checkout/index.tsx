@@ -378,9 +378,11 @@ export default function Checkout() {
                                                     </span>
                                                 </span>
                                                 <span className="mt-1 block text-xs leading-5 text-[#77786e]">
-                                                    Secure online card checkout
-                                                    is coming soon. Card details
-                                                    are not collected here.
+                                                    Visa will use a secure,
+                                                    provider-hosted payment page
+                                                    once the gateway is
+                                                    configured. Card details are
+                                                    never collected here.
                                                 </span>
                                             </span>
                                         </div>

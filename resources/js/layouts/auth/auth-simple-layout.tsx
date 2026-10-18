@@ -1,4 +1,5 @@
 import { Link } from '@inertiajs/react';
+import { ArrowLeft } from 'lucide-react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { home } from '@/routes';
 import type { AuthLayoutProps } from '@/types';
@@ -31,6 +32,13 @@ export default function AuthSimpleLayout({
                         </div>
                     </div>
                     {children}
+                    <Link
+                        href={home()}
+                        className="inline-flex items-center justify-center gap-2 text-sm text-muted-foreground transition hover:text-foreground"
+                    >
+                        <ArrowLeft size={15} />
+                        Back to Afya360
+                    </Link>
                 </div>
             </div>
         </div>

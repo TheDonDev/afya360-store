@@ -11,12 +11,27 @@ import { store } from '@/routes/register';
 
 type Props = {
     passwordRules: string;
+    googleEnabled: boolean;
 };
 
-export default function Register({ passwordRules }: Props) {
+export default function Register({ passwordRules, googleEnabled }: Props) {
     return (
         <>
             <Head title="Register" />
+            {googleEnabled && (
+                <a
+                    href="/auth/google/redirect"
+                    className="mb-5 flex h-10 w-full items-center justify-center gap-3 border border-input bg-background text-sm font-medium transition hover:bg-accent"
+                >
+                    <span
+                        aria-hidden="true"
+                        className="font-bold text-[#4285f4]"
+                    >
+                        G
+                    </span>
+                    Continue with Google
+                </a>
+            )}
             <Form
                 {...store.form()}
                 resetOnSuccess={['password', 'password_confirmation']}
@@ -107,6 +122,10 @@ export default function Register({ passwordRules }: Props) {
                                 Log in
                             </TextLink>
                         </div>
+                        <p className="text-center text-xs leading-5 text-muted-foreground">
+                            We’ll email you a verification link before your
+                            account is fully activated.
+                        </p>
                     </>
                 )}
             </Form>

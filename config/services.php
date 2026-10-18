@@ -39,4 +39,10 @@ return [
         'order_number' => env('WHATSAPP_ORDER_NUMBER', '0724151522'),
     ],
 
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI', env('APP_URL').'/auth/google/callback'),
+    ],
+
 ];

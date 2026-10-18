@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\StorefrontController;
@@ -12,6 +13,13 @@ Route::get('/products/{product:slug}', [
     StorefrontController::class,
     'show',
 ])->name('products.show');
+
+Route::middleware('guest')->prefix('auth/google')->name('google.')->group(function () {
+    Route::get('/redirect', [GoogleAuthController::class, 'redirect'])
+        ->name('redirect');
+    Route::get('/callback', [GoogleAuthController::class, 'callback'])
+        ->name('callback');
+});
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'dashboard')

@@ -50,6 +50,9 @@ class FortifyServiceProvider extends ServiceProvider
     {
         Fortify::loginView(fn (Request $request) => Inertia::render('auth/login', [
             'canResetPassword' => Features::enabled(Features::resetPasswords()),
+            'googleEnabled' => filled(config('services.google.client_id'))
+                && filled(config('services.google.client_secret'))
+                && filled(config('services.google.redirect')),
             'status' => $request->session()->get('status'),
         ]));
 
@@ -69,6 +72,9 @@ class FortifyServiceProvider extends ServiceProvider
 
         Fortify::registerView(fn () => Inertia::render('auth/register', [
             'passwordRules' => Password::defaults()->toPasswordRulesString(),
+            'googleEnabled' => filled(config('services.google.client_id'))
+                && filled(config('services.google.client_secret'))
+                && filled(config('services.google.redirect')),
         ]));
 
         Fortify::twoFactorChallengeView(fn () => Inertia::render('auth/two-factor-challenge'));
