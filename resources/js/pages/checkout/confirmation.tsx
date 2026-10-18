@@ -20,6 +20,7 @@ type Props = {
         reference: string;
         order_number: string;
         subtotal: number;
+        payment_method: 'whatsapp';
         items: OrderItem[];
         reservation_expires_at: string | null;
         reservation_expired: boolean;
@@ -134,6 +135,7 @@ export default function Confirmation({ order, whatsapp_url }: Props) {
                                 href={whatsapp_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
+                                referrerPolicy="no-referrer"
                                 className="mt-7 flex items-center justify-center gap-3 bg-[#1f6b4a] px-5 py-4 text-xs font-semibold tracking-[0.1em] text-white transition hover:bg-[#18563b]"
                             >
                                 <MessageCircle size={18} />
@@ -147,9 +149,10 @@ export default function Confirmation({ order, whatsapp_url }: Props) {
                                     size={15}
                                     className="mt-0.5 shrink-0 text-[#244c3b]"
                                 />
-                                Payment is arranged directly with Afya360. Do
-                                not send payment until you have confirmed the
-                                delivery fee and order details.
+                                WhatsApp opens with this order prefilled. Press
+                                Send in WhatsApp to contact Afya360. Do not send
+                                payment until you have confirmed the delivery
+                                fee and order details.
                             </div>
                         </div>
                     </section>

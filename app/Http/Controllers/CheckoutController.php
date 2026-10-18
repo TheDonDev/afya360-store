@@ -34,6 +34,7 @@ class CheckoutController extends Controller
             'delivery_address' => ['required', 'string', 'max:2000'],
             'delivery_area' => ['required', 'string', 'max:120'],
             'delivery_notes' => ['nullable', 'string', 'max:1000'],
+            'payment_method' => ['required', 'in:whatsapp'],
             'items' => ['required', 'array', 'min:1', 'max:50'],
             'items.*.id' => ['required', 'integer', 'distinct'],
             'items.*.quantity' => ['required', 'integer', 'min:1', 'max:1000'],
@@ -106,6 +107,7 @@ class CheckoutController extends Controller
                 'delivery_fee' => null,
                 'total' => null,
                 'reservation_expires_at' => now()->addHours(2),
+                'payment_method' => $validated['payment_method'],
                 'status' => 'pending',
                 'payment_status' => 'unpaid',
             ]);
@@ -173,13 +175,16 @@ class CheckoutController extends Controller
         $phone = str_starts_with($phone, '0')
             ? '254'.substr($phone, 1)
             : $phone;
-        $whatsappUrl = 'https://wa.me/'.$phone.'?text='.rawurlencode(implode("\n", $messageLines));
+        $whatsappUrl = 'https://web.whatsapp.com/send/?phone='.$phone
+            .'&text='.rawurlencode(implode("\n", $messageLines))
+            .'&type=phone_number&app_absent=0';
 
         return Inertia::render('checkout/confirmation', [
             'order' => [
                 'reference' => $order->reference,
                 'order_number' => $order->order_number,
                 'subtotal' => (float) $order->subtotal,
+                'payment_method' => $order->payment_method,
                 'items' => $order->items->map(fn ($item): array => [
                     'name' => $item->product_name,
                     'sku' => $item->sku,

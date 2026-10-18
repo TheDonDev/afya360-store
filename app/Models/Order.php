@@ -23,6 +23,7 @@ class Order extends Model
         'delivery_fee',
         'total',
         'reservation_expires_at',
+        'payment_method',
         'status',
         'payment_status',
     ];

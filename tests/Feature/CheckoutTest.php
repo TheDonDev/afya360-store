@@ -35,6 +35,7 @@ $checkoutDetails = fn (int $productId, int $quantity): array => [
     'delivery_address' => '12 Test Lane, Apartment 4',
     'delivery_area' => 'Nairobi',
     'delivery_notes' => 'Call on arrival',
+    'payment_method' => 'whatsapp',
     'items' => [[
         'id' => $productId,
         'quantity' => $quantity,
@@ -55,6 +56,7 @@ test('checkout creates a database-priced order and reserves stock', function () 
         'subtotal' => 3500,
         'status' => 'pending',
         'payment_status' => 'unpaid',
+        'payment_method' => 'whatsapp',
         'delivery_fee' => null,
         'total' => null,
     ]);
@@ -80,7 +82,8 @@ test('checkout creates a database-priced order and reserves stock', function () 
         ->assertInertia(fn (Assert $page) => $page
             ->component('checkout/confirmation')
             ->where('order.order_number', $order->order_number)
-            ->where('whatsapp_url', fn (string $url): bool => str_starts_with($url, 'https://wa.me/254724151522?text=')
+            ->where('whatsapp_url', fn (string $url): bool => str_starts_with($url, 'https://web.whatsapp.com/send/?phone=254724151522&text=')
+                && str_contains($url, '&type=phone_number&app_absent=0')
                 && str_contains(urldecode($url), '12 Test Lane, Apartment 4'))
         );
 
@@ -131,4 +134,16 @@ test('checkout rejects products without confirmed stock', function () use ($chec
         'id' => $product->id,
         'stock_quantity' => null,
     ]);
+});
+
+test('checkout does not accept the Visa placeholder as an active payment method', function () use ($checkoutDetails) {
+    $product = ($this->makeProduct)();
+    $details = $checkoutDetails($product->id, 1);
+    $details['payment_method'] = 'visa';
+
+    $this->from(route('checkout.create'))
+        ->post(route('checkout.store'), $details)
+        ->assertSessionHasErrors('payment_method');
+
+    $this->assertDatabaseCount('orders', 0);
 });
