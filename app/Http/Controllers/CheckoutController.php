@@ -175,9 +175,10 @@ class CheckoutController extends Controller
         $phone = str_starts_with($phone, '0')
             ? '254'.substr($phone, 1)
             : $phone;
-        $whatsappUrl = 'https://web.whatsapp.com/send/?phone='.$phone
-            .'&text='.rawurlencode(implode("\n", $messageLines))
-            .'&type=phone_number&app_absent=0';
+        $whatsappQuery = http_build_query([
+            'text' => implode("\n", $messageLines),
+        ], '', '&', PHP_QUERY_RFC1738);
+        $whatsappUrl = 'https://wa.me/'.$phone.'?'.$whatsappQuery;
 
         return Inertia::render('checkout/confirmation', [
             'order' => [

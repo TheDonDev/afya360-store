@@ -82,9 +82,16 @@ test('checkout creates a database-priced order and reserves stock', function () 
         ->assertInertia(fn (Assert $page) => $page
             ->component('checkout/confirmation')
             ->where('order.order_number', $order->order_number)
-            ->where('whatsapp_url', fn (string $url): bool => str_starts_with($url, 'https://web.whatsapp.com/send/?phone=254724151522&text=')
-                && str_contains($url, '&type=phone_number&app_absent=0')
-                && str_contains(urldecode($url), '12 Test Lane, Apartment 4'))
+            ->where('whatsapp_url', function (string $url) use ($order): bool {
+                parse_str((string) parse_url($url, PHP_URL_QUERY), $query);
+
+                return str_starts_with($url, 'https://wa.me/254724151522?')
+                    && str_contains($query['text'] ?? '', "Hello Afya360, I placed order {$order->order_number}.\n")
+                    && str_contains($query['text'] ?? '', "Customer: Amina Test\nContact: 0724151522")
+                    && str_contains($query['text'] ?? '', "Delivery address: 12 Test Lane, Apartment 4\n")
+                    && str_contains($query['text'] ?? '', "Order summary:\n2 x Test Magnesium - KSh 3,500.00")
+                    && str_contains($query['text'] ?? '', 'Please confirm delivery charges and send payment instructions.');
+            })
         );
 
     $this->travel(2)->hours();
