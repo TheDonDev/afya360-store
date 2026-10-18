@@ -2,7 +2,6 @@ import {
     createContext,
     useContext,
     useEffect,
-    useMemo,
     useState,
     type ReactNode,
 } from 'react';
@@ -367,27 +366,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setItems((current) => current.filter((item) => item.id !== id));
     }
 
-    const value = useMemo<CartContextValue>(
-        () => ({
-            items,
-            itemCount: items.reduce((sum, item) => sum + item.quantity, 0),
-            subtotal: items
-                .filter((item) => item.available)
-                .reduce(
-                    (sum, item) => sum + item.price * item.quantity,
-                    0,
-                ),
-            isOpen,
-            notice,
-            openCart: () => setIsOpen(true),
-            closeCart: () => setIsOpen(false),
-            addItem,
-            changeQuantity,
-            removeItem,
-            clearNotice: () => setNotice(null),
-        }),
-        [items, isOpen, notice, busyIds],
-    );
+    const value: CartContextValue = {
+        items,
+        itemCount: items.reduce((sum, item) => sum + item.quantity, 0),
+        subtotal: items
+            .filter((item) => item.available)
+            .reduce((sum, item) => sum + item.price * item.quantity, 0),
+        isOpen,
+        notice,
+        openCart: () => setIsOpen(true),
+        closeCart: () => setIsOpen(false),
+        addItem,
+        changeQuantity,
+        removeItem,
+        clearNotice: () => setNotice(null),
+    };
 
     return (
         <CartContext.Provider value={value}>

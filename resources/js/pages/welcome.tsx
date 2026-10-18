@@ -1,4 +1,3 @@
-
 import { Head, Link } from '@inertiajs/react';
 import {
     ArrowRight,
@@ -7,18 +6,17 @@ import {
     Heart,
     Leaf,
     Menu,
-    Minus,
     Plus,
     Search,
     ShieldCheck,
     ShoppingBag,
     Sparkles,
-    Trash2,
     Truck,
     UserRound,
     X,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { useCart } from '@/components/storefront/cart-provider';
 
 type Category =
     | 'All'
@@ -118,10 +116,9 @@ export default function Welcome({ products }: WelcomeProps) {
     const [subcategory, setSubcategory] = useState<string | null>(null);
     const [brand, setBrand] = useState<string>('All');
     const [search, setSearch] = useState('');
-    const [cart, setCart] = useState<Record<number, number>>({});
     const [wishlist, setWishlist] = useState<number[]>([]);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const [cartOpen, setCartOpen] = useState(false);
+    const { itemCount: cartCount, openCart, addItem } = useCart();
 
     const filteredProducts = useMemo(() => {
         const term = search.trim().toLowerCase();
@@ -155,40 +152,6 @@ export default function Welcome({ products }: WelcomeProps) {
         () => [...new Set(products.map((product) => product.brand).filter(Boolean))].sort(),
         [products],
     );
-
-    const cartItems = products.filter((product) => cart[product.id] > 0);
-
-    const cartCount = Object.values(cart).reduce(
-        (total, quantity) => total + quantity,
-        0,
-    );
-
-    const cartTotal = cartItems.reduce(
-        (total, product) => total + product.price * cart[product.id],
-        0,
-    );
-
-    function addToCart(productId: number) {
-        setCart((current) => ({
-            ...current,
-            [productId]: (current[productId] ?? 0) + 1,
-        }));
-    }
-
-    function changeQuantity(productId: number, change: number) {
-        setCart((current) => {
-            const nextQuantity = (current[productId] ?? 0) + change;
-            const updated = { ...current };
-
-            if (nextQuantity <= 0) {
-                delete updated[productId];
-            } else {
-                updated[productId] = nextQuantity;
-            }
-
-            return updated;
-        });
-    }
 
     function toggleWishlist(productId: number) {
         setWishlist((current) =>
@@ -319,7 +282,7 @@ export default function Welcome({ products }: WelcomeProps) {
                             <button
                                 type="button"
                                 aria-label={`Shopping bag, ${cartCount} items`}
-                                onClick={() => setCartOpen(true)}
+                                onClick={openCart}
                                 className="relative rounded-full p-2.5 transition hover:bg-[#f2eee6]"
                             >
                                 <ShoppingBag
@@ -749,7 +712,7 @@ export default function Welcome({ products }: WelcomeProps) {
                                             <button
                                                 type="button"
                                                 onClick={() =>
-                                                    addToCart(product.id)
+                                                    void addItem(product)
                                                 }
                                                 className="absolute inset-x-0 bottom-0 flex translate-y-full items-center justify-center gap-2 bg-[#244c3b] py-3 text-[10px] font-medium tracking-[0.12em] text-white transition-transform duration-300 group-hover:translate-y-0 max-sm:translate-y-0 sm:text-xs"
                                             >
@@ -791,7 +754,7 @@ export default function Welcome({ products }: WelcomeProps) {
                                                     type="button"
                                                     aria-label={`Add ${product.name} to bag`}
                                                     onClick={() =>
-                                                        addToCart(product.id)
+                                                        void addItem(product)
                                                     }
                                                     className="inline-flex h-8 w-8 items-center justify-center border border-[#d8d8cc] text-[#244c3b] transition hover:bg-[#244c3b] hover:text-white sm:hidden"
                                                 >
@@ -1016,201 +979,6 @@ export default function Welcome({ products }: WelcomeProps) {
                     </div>
                 </footer>
 
-                {/* Shopping cart drawer */}
-                {cartOpen && (
-                    <div className="fixed inset-0 z-50">
-                        <button
-                            type="button"
-                            aria-label="Close shopping bag"
-                            onClick={() => setCartOpen(false)}
-                            className="absolute inset-0 bg-black/40"
-                        />
-
-                        <aside
-                            role="dialog"
-                            aria-modal="true"
-                            aria-label="Shopping bag"
-                            className="absolute inset-y-0 right-0 flex w-full max-w-md flex-col bg-[#fffdf9] shadow-2xl"
-                        >
-                            <div className="flex items-center justify-between border-b border-[#e9e6df] px-5 py-5">
-                                <div>
-                                    <h2 className="font-serif text-2xl text-[#244c3b]">
-                                        Your shopping bag
-                                    </h2>
-                                    <p className="mt-1 text-xs text-[#77786e]">
-                                        {cartCount} item
-                                        {cartCount === 1 ? '' : 's'}
-                                    </p>
-                                </div>
-
-                                <button
-                                    type="button"
-                                    aria-label="Close bag"
-                                    onClick={() => setCartOpen(false)}
-                                    className="rounded-full p-2 hover:bg-[#f2eee6]"
-                                >
-                                    <X size={21} />
-                                </button>
-                            </div>
-
-                            <div className="flex-1 overflow-y-auto px-5 py-4">
-                                {cartItems.length === 0 ? (
-                                    <div className="flex h-full flex-col items-center justify-center text-center">
-                                        <ShoppingBag
-                                            size={42}
-                                            strokeWidth={1.2}
-                                            className="text-[#9a9b92]"
-                                        />
-                                        <h3 className="mt-5 font-serif text-2xl text-[#244c3b]">
-                                            Your bag is waiting
-                                        </h3>
-                                        <p className="mt-2 max-w-xs text-sm leading-6 text-[#77786e]">
-                                            Explore our collection and add
-                                            something lovely to your routine.
-                                        </p>
-                                        <button
-                                            onClick={() => {
-                                                setCartOpen(false);
-                                                document
-                                                    .getElementById('shop')
-                                                    ?.scrollIntoView({
-                                                        behavior: 'smooth',
-                                                    });
-                                            }}
-                                            className="mt-6 bg-[#244c3b] px-6 py-3 text-xs font-medium tracking-[0.1em] text-white"
-                                        >
-                                            CONTINUE SHOPPING
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <div className="space-y-5">
-                                        {cartItems.map((product) => (
-                                            <div
-                                                key={product.id}
-                                                className="flex gap-4 border-b border-[#e9e6df] pb-5"
-                                            >
-                                                {product.image ? (
-                                                    <img
-                                                        src={product.image}
-                                                        alt={product.name}
-                                                        className="h-24 w-20 bg-[#f0ece5] object-cover"
-                                                    />
-                                                ) : (
-                                                    <div
-                                                        role="img"
-                                                        aria-label={`${product.name} image unavailable`}
-                                                        className="h-24 w-20 bg-[#f0ece5]"
-                                                    />
-                                                )}
-
-                                                <div className="min-w-0 flex-1">
-                                                    <p className="text-[9px] tracking-[0.1em] text-[#898a80]">
-                                                        {product.brand.toUpperCase()}
-                                                    </p>
-                                                    <h3 className="mt-1 text-sm font-medium text-[#244c3b]">
-                                                        {product.name}
-                                                    </h3>
-                                                    <p className="mt-2 text-sm font-semibold">
-                                                        {formatPrice(
-                                                            product.price,
-                                                        )}
-                                                    </p>
-
-                                                    <div className="mt-3 flex items-center justify-between">
-                                                        <div className="flex items-center border border-[#dedbd2]">
-                                                            <button
-                                                                aria-label="Decrease quantity"
-                                                                onClick={() =>
-                                                                    changeQuantity(
-                                                                        product.id,
-                                                                        -1,
-                                                                    )
-                                                                }
-                                                                className="p-2 hover:bg-[#f2eee6]"
-                                                            >
-                                                                <Minus
-                                                                    size={13}
-                                                                />
-                                                            </button>
-                                                            <span className="min-w-7 text-center text-xs">
-                                                                {
-                                                                    cart[
-                                                                        product
-                                                                            .id
-                                                                    ]
-                                                                }
-                                                            </span>
-                                                            <button
-                                                                aria-label="Increase quantity"
-                                                                onClick={() =>
-                                                                    changeQuantity(
-                                                                        product.id,
-                                                                        1,
-                                                                    )
-                                                                }
-                                                                className="p-2 hover:bg-[#f2eee6]"
-                                                            >
-                                                                <Plus
-                                                                    size={13}
-                                                                />
-                                                            </button>
-                                                        </div>
-
-                                                        <button
-                                                            aria-label="Remove item"
-                                                            onClick={() =>
-                                                                changeQuantity(
-                                                                    product.id,
-                                                                    -cart[
-                                                                        product
-                                                                            .id
-                                                                    ],
-                                                                )
-                                                            }
-                                                            className="p-2 text-[#898a80] hover:text-red-700"
-                                                        >
-                                                            <Trash2 size={15} />
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-
-                            {cartItems.length > 0 && (
-                                <div className="border-t border-[#e9e6df] p-5">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-sm text-[#77786e]">
-                                            Subtotal
-                                        </span>
-                                        <span className="text-lg font-semibold text-[#244c3b]">
-                                            {formatPrice(cartTotal)}
-                                        </span>
-                                    </div>
-                                    <p className="mt-2 text-xs leading-5 text-[#77786e]">
-                                        Delivery charges will be calculated
-                                        at checkout.
-                                    </p>
-                                    <button
-                                        type="button"
-                                        disabled
-                                        className="mt-5 flex w-full items-center justify-center gap-3 bg-[#244c3b] px-5 py-4 text-xs font-semibold tracking-[0.13em] text-white opacity-60"
-                                        title="Checkout will be enabled when orders and payments are implemented."
-                                    >
-                                        CHECKOUT COMING SOON
-                                        <ArrowRight size={16} />
-                                    </button>
-                                    <p className="mt-3 text-center text-[10px] text-[#898a80]">
-                                        Online payments will be enabled after
-                                        checkout integration.
-                                    </p>
-                                </div>
-                            )}
-                        </aside>
-                    </div>
-                )}
             </div>
         </>
     );

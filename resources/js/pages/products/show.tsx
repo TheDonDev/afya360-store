@@ -1,12 +1,14 @@
 import { Head, Link } from '@inertiajs/react';
 import {
     ArrowLeft,
-    Check,
     ChevronRight,
+    Plus,
+    ShoppingBag,
     ShieldCheck,
     Truck,
 } from 'lucide-react';
 import { useState } from 'react';
+import { useCart } from '@/components/storefront/cart-provider';
 
 type ProductDetails = {
     id: number;
@@ -40,6 +42,7 @@ const formatPrice = (price: number) =>
     })}`;
 
 export default function Show({ product }: Props) {
+    const { addItem, itemCount, openCart } = useCart();
     const [selectedImage, setSelectedImage] = useState(
         product.images[0] ?? null,
     );
@@ -86,6 +89,19 @@ export default function Show({ product }: Props) {
                             <ArrowLeft size={16} />
                             Continue shopping
                         </Link>
+                        <button
+                            type="button"
+                            aria-label={`Shopping bag, ${itemCount} items`}
+                            onClick={openCart}
+                            className="relative rounded-full p-2.5 transition hover:bg-[#f2eee6]"
+                        >
+                            <ShoppingBag size={19} strokeWidth={1.6} />
+                            {itemCount > 0 && (
+                                <span className="absolute -right-0.5 -top-0.5 flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-[#244c3b] px-1 text-[9px] font-semibold text-white">
+                                    {itemCount}
+                                </span>
+                            )}
+                        </button>
                     </div>
                 </header>
 
@@ -225,13 +241,14 @@ export default function Show({ product }: Props) {
                                 </div>
                             </div>
 
-                            <Link
-                                href="/#shop"
+                            <button
+                                type="button"
+                                onClick={() => void addItem(product)}
                                 className="mt-8 inline-flex items-center justify-center gap-2 bg-[#244c3b] px-6 py-4 text-xs font-semibold tracking-[0.12em] text-white transition hover:bg-[#183a2b]"
                             >
-                                <Check size={16} />
-                                CONTINUE TO SHOP
-                            </Link>
+                                <Plus size={16} />
+                                ADD TO BAG
+                            </button>
                         </section>
                     </div>
 
