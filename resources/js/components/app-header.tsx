@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Menu, Search, ShoppingBag } from 'lucide-react';
+import { Menu, Search, ShoppingBag, HelpCircle } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Breadcrumbs } from '@/components/breadcrumbs';
@@ -38,6 +38,16 @@ const mainNavItems: NavItem[] = [
         title: 'Shop Afya360',
         href: '/',
         icon: ShoppingBag,
+    },
+    {
+        title: 'About',
+        href: '/customer-care/about',
+        icon: HelpCircle,
+    },
+    {
+        title: 'Contact',
+        href: '/customer-care/contact',
+        icon: HelpCircle,
     },
 ];
 

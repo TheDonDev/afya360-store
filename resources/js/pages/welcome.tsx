@@ -1053,23 +1053,36 @@ export default function Welcome({ products }: WelcomeProps) {
                                 CUSTOMER CARE
                             </h3>
                             <div className="mt-5 space-y-3 text-sm text-[#77786e]">
-                                <a
-                                    href="#about"
+                                <Link
+                                    href="/customer-care/about"
                                     className="block hover:text-[#244c3b]"
                                 >
                                     About Afya360
-                                </a>
-                                <a
-                                    href="mailto:hello@afya360.example"
+                                </Link>
+                                <Link
+                                    href="/customer-care/contact"
                                     className="block hover:text-[#244c3b]"
                                 >
                                     Contact us
-                                </a>
-                                <span className="block">
+                                </Link>
+                                <Link
+                                    href="/customer-care/delivery-returns"
+                                    className="block hover:text-[#244c3b]"
+                                >
                                     Delivery & returns
-                                </span>
-                                <span className="block">Privacy policy</span>
-                                <span className="block">Terms of service</span>
+                                </Link>
+                                <Link
+                                    href="/customer-care/privacy-policy"
+                                    className="block hover:text-[#244c3b]"
+                                >
+                                    Privacy policy
+                                </Link>
+                                <Link
+                                    href="/customer-care/terms-of-service"
+                                    className="block hover:text-[#244c3b]"
+                                >
+                                    Terms of service
+                                </Link>
                             </div>
                         </div>
                     </div>

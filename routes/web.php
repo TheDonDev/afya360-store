@@ -61,4 +61,25 @@ Route::get('/checkout/visa/success/{order:reference}', [
     'visaSuccess',
 ])->name('checkout.visa.success');
 
+// Customer care pages
+Route::get('/customer-care/about', function () {
+    return Inertia::render('customer-care/about');
+})->name('customer-care.about');
+
+Route::get('/customer-care/contact', function () {
+    return Inertia::render('customer-care/contact');
+})->name('customer-care.contact');
+
+Route::get('/customer-care/delivery-returns', function () {
+    return Inertia::render('customer-care/delivery-returns');
+})->name('customer-care.delivery-returns');
+
+Route::get('/customer-care/privacy-policy', function () {
+    return Inertia::render('customer-care/privacy-policy');
+})->name('customer-care.privacy-policy');
+
+Route::get('/customer-care/terms-of-service', function () {
+    return Inertia::render('customer-care/terms-of-service');
+})->name('customer-care.terms-of-service');
+
 require __DIR__.'/settings.php';
