@@ -67,24 +67,20 @@ class MyDawaProductSeeder extends Seeder
                 }
 
                 $stockText = trim($row['Stock'] ?? '');
-                $quantity = null;
+                $quantity = 10; // Set initial available stock to 10 for all products
 
-                if (preg_match(
-                    '/Only\s+(\d+)\s+left/i',
-                    $stockText,
-                    $matches
-                )) {
-                    $quantity = (int) $matches[1];
-                }
-
-                $stockStatus = $quantity !== null
-                    ? 'limited'
-                    : (stripos($stockText, 'in stock') !== false
-                        ? 'in_stock'
-                        : 'unknown');
+                $stockStatus = stripos($stockText, 'in stock') !== false
+                    ? 'in_stock'
+                    : (stripos($stockText, 'out of stock') !== false
+                        ? 'out_of_stock'
+                        : 'limited');
 
                 $sourceCategory = trim($row['Categories'] ?? '');
-                $categoryText = strtolower($sourceCategory);
+                // Extract main category and subcategory from "Category > Subcategory"
+                $categoryParts = explode('>', $sourceCategory);
+                $mainCategoryText = trim($categoryParts[0] ?? '');
+                $subCategoryText = trim($categoryParts[1] ?? '');
+                $categoryText = strtolower($mainCategoryText);
                 $nameText = strtolower($name);
 
                 // Map CSV categories to site category slugs
@@ -141,7 +137,7 @@ class MyDawaProductSeeder extends Seeder
                     'sku' => $sku !== '' ? $sku : null,
                     'brand' => trim($row['Vendor'] ?? '') ?: null,
                     'source_url' => trim($row['Explicit URL'] ?? '') ?: null,
-                    'source_category' => $sourceCategory ?: null,
+                    'source_category' => $subCategoryText ?: null,
                     'source_stock_text' => $stockText ?: null,
                     'stock_status' => $stockStatus,
                     'catalog_visibility' => trim(

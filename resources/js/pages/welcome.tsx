@@ -905,16 +905,13 @@ export default function Welcome({ products }: WelcomeProps) {
                             )}
 
                             <div className="mt-12 text-center">
-                                <button
-                                    onClick={() => {
-                                        setCategory('All');
-                                        setSearch('');
-                                    }}
+                                <Link
+                                    href="/products"
                                     className="inline-flex items-center gap-3 border-b border-[#244c3b] pb-2 text-[10px] font-semibold tracking-[0.16em] text-[#244c3b] sm:text-xs"
                                 >
                                     EXPLORE ALL PRODUCTS
                                     <ArrowRight size={15} />
-                                </button>
+                                </Link>
                             </div>
                         </div>
                     </section>
