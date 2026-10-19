@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Menu, Search, ShoppingBag, HelpCircle } from 'lucide-react';
+import { Menu, Search, ShoppingBag, HelpCircle, Phone } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Breadcrumbs } from '@/components/breadcrumbs';
@@ -151,6 +151,24 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                     </div>
 
                     <div className="ml-auto flex items-center space-x-2">
+                        <a
+                            href="tel:0724151522"
+                            className="relative flex items-center space-x-1"
+                        >
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="group h-9 w-9 cursor-pointer text-[#244c3b] hover:bg-[#f2eee6]"
+                            >
+                                <Phone size={20} strokeWidth={1.6} />
+                            </Button>
+                            <span className="absolute -top-1 -right-1 flex h-2 w-2 items-center justify-center rounded-full bg-[#244c3b] px-0.5">
+                                <span className="text-[8px] font-bold text-white">
+                                    CALL
+                                </span>
+                            </span>
+                        </a>
+
                         <div className="relative flex items-center space-x-1">
                             <Button
                                 variant="ghost"

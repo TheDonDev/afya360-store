@@ -47,7 +47,7 @@ export default function TermsOfService() {
                                 type="button"
                                 className="rounded-full p-2.5 transition hover:bg-[#f2eee6]"
                             >
-                                <Document size={19} strokeWidth={1.6} />
+                                <FileText size={19} strokeWidth={1.6} />
                             </button>
                         </div>
                     </div>
