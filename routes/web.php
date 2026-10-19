@@ -42,5 +42,18 @@ Route::get('/checkout/confirmation/{order:reference}', [
     CheckoutController::class,
     'confirmation',
 ])->name('checkout.confirmation');
+Route::get('/checkout/visa/{order:reference}', [
+    CheckoutController::class,
+    'visaPayment',
+])->name('checkout.visa');
+Route::post('/checkout/webhook/visa', [
+    CheckoutController::class,
+    'visaWebhook',
+])->name('checkout.visa.webhook');
+
+Route::post('/api/visa/payment-intent', [
+    CheckoutController::class,
+    'visaPaymentIntent',
+])->middleware('auth')->name('api.visa.payment-intent');
 
 require __DIR__.'/settings.php';

@@ -45,4 +45,11 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URI', env('APP_URL').'/auth/google/callback'),
     ],
 
+    'visa_gateway' => [
+        'environment' => env('VISA_GATEWAY_ENVIRONMENT', 'sandbox'),
+        'org_id' => env('VISA_GATEWAY_ORG_ID'),
+        'key_id' => env('VISA_GATEWAY_KEY_ID'),
+        'shared_secret' => env('VISA_GATEWAY_SHARED_SECRET'),
+        'base_url' => env('VISA_GATEWAY_BASE_URL', 'https://api.visa.com/v2'),
+    ],
 ];

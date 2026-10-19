@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -134,6 +135,31 @@ class CheckoutController extends Controller
         return to_route('checkout.confirmation', $order->reference);
     }
 
+    public function visaPayment(Order $order): Response
+    {
+        if ($order->payment_method !== 'visa') {
+            return to_route('checkout.confirmation', $order->reference);
+        }
+
+        $config = config('services.visa_gateway');
+        $gatewayConfigured = !empty($config['org_id'] && $config['key_id'] && $config['shared_secret']);
+
+        return Inertia::render('checkout/visa-payment', [
+            'order' => [
+                'reference' => $order->reference,
+                'order_number' => $order->order_number,
+                'subtotal' => (float) $order->subtotal,
+                'payment_method' => $order->payment_method,
+            ],
+            'gateway_configured' => $gatewayConfigured,
+            'gateway_config' => [
+                'environment' => $config['environment'],
+                'org_id' => $config['org_id'],
+                'key_id' => $config['key_id'],
+            ],
+        ]);
+    }
+
     public function confirmation(Order $order): Response
     {
         $order->load('items:id,order_id,product_name,sku,unit_price,quantity,line_total');
@@ -198,5 +224,50 @@ class CheckoutController extends Controller
             ],
             'whatsapp_url' => $whatsappUrl,
         ]);
+    }
+
+    public function visaWebhook(Request $request)
+    {
+        $payload = $request->all();
+        Log::info('Visa webhook received', $payload);
+
+        $config = config('services.visa_gateway');
+        $signature = $request->header('x-visa-signature');
+        $sharedSecret = $config['shared_secret'];
+
+        if ($sharedSecret && $signature) {
+            $expected = hash_hmac('sha256', json_encode($payload), $sharedSecret);
+            if (! hash_equals($expected, $signature)) {
+                return response()->json(['error' => 'Invalid signature'], 401);
+            }
+        }
+
+        $reference = $payload['reference'] ?? $payload['order_reference'] ?? null;
+        $status = $payload['status'] ?? $payload['payment_status'] ?? null;
+
+        if (!$reference || !$status) {
+            return response()->json(['error' => 'Missing reference or status'], 400);
+        }
+
+        $order = Order::where('reference', $reference)->first();
+
+        if (!$order) {
+            return response()->json(['error' => 'Order not found'], 404);
+        }
+
+        if (in_array($status, ['paid', 'completed', 'success'])) {
+            $order->update([
+                'payment_status' => 'paid',
+                'status' => 'processing',
+                'total' => $payload['amount'] ?? $order->subtotal,
+            ]);
+        } elseif (in_array($status, ['failed', 'cancelled', 'declined'])) {
+            $order->update([
+                'payment_status' => 'failed',
+                'status' => 'cancelled',
+            ]);
+        }
+
+        return response()->json(['ok' => true]);
     }
 }

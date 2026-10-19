@@ -3,6 +3,7 @@ import {
     ArrowLeft,
     ArrowRight,
     Check,
+    CreditCard,
     MessageCircle,
     ShieldCheck,
 } from 'lucide-react';
@@ -20,7 +21,7 @@ type Props = {
         reference: string;
         order_number: string;
         subtotal: number;
-        payment_method: 'whatsapp';
+        payment_method: 'whatsapp' | 'visa';
         items: OrderItem[];
         reservation_expires_at: string | null;
         reservation_expired: boolean;
@@ -131,29 +132,55 @@ export default function Confirmation({ order, whatsapp_url }: Props) {
                                     </p>
                                 )}
 
-                            <a
-                                href={whatsapp_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                referrerPolicy="no-referrer"
-                                className="mt-7 flex items-center justify-center gap-3 bg-[#1f6b4a] px-5 py-4 text-xs font-semibold tracking-[0.1em] text-white transition hover:bg-[#18563b]"
-                            >
-                                <MessageCircle size={18} />
-                                {order.reservation_expired
-                                    ? 'CHECK AVAILABILITY ON WHATSAPP'
-                                    : 'CONFIRM DELIVERY & PAYMENT ON WHATSAPP'}
-                                <ArrowRight size={16} />
-                            </a>
-                            <div className="mt-4 flex items-start gap-2 text-xs leading-5 text-[#77786e]">
-                                <ShieldCheck
-                                    size={15}
-                                    className="mt-0.5 shrink-0 text-[#244c3b]"
-                                />
-                                WhatsApp opens with this order prefilled. Press
-                                Send in WhatsApp to contact Afya360. Do not send
-                                payment until you have confirmed the delivery
-                                fee and order details.
-                            </div>
+                            {order.payment_method === 'visa' ? (
+                                <>
+                                    <a
+                                        href={`/checkout/visa/${order.reference}`}
+                                        className="mt-7 flex items-center justify-center gap-3 bg-[#244c3b] px-5 py-4 text-xs font-semibold tracking-[0.1em] text-white transition hover:bg-[#183a2b]"
+                                    >
+                                        <CreditCard size={18} />
+                                        PROCEED TO SECURE VISA PAYMENT
+                                        <ArrowRight size={16} />
+                                    </a>
+                                    <div className="mt-4 flex items-start gap-2 text-xs leading-5 text-[#77786e]">
+                                        <ShieldCheck
+                                            size={15}
+                                            className="mt-0.5 shrink-0 text-[#244c3b]"
+                                        />
+                                        Secure, provider-hosted payment page.
+                                        Card details are never collected here.
+                                        You will be redirected back after
+                                        payment.
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <a
+                                        href={whatsapp_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        referrerPolicy="no-referrer"
+                                        className="mt-7 flex items-center justify-center gap-3 bg-[#1f6b4a] px-5 py-4 text-xs font-semibold tracking-[0.1em] text-white transition hover:bg-[#18563b]"
+                                    >
+                                        <MessageCircle size={18} />
+                                        {order.reservation_expired
+                                            ? 'CHECK AVAILABILITY ON WHATSAPP'
+                                            : 'CONFIRM DELIVERY & PAYMENT ON WHATSAPP'}
+                                        <ArrowRight size={16} />
+                                    </a>
+                                    <div className="mt-4 flex items-start gap-2 text-xs leading-5 text-[#77786e]">
+                                        <ShieldCheck
+                                            size={15}
+                                            className="mt-0.5 shrink-0 text-[#244c3b]"
+                                        />
+                                        WhatsApp opens with this order
+                                        prefilled. Press Send in WhatsApp to
+                                        contact Afya360. Do not send payment
+                                        until you have confirmed the delivery
+                                        fee and order details.
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </section>
                 </main>

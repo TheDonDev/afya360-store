@@ -3,8 +3,11 @@
 Classify all scraped products into Categories and Subcategories based on
 URL path and product name keywords.
 
-Updates the mydawa-products-scraped.csv with proper source_category values
-that include subcategory info (e.g., "Skincare > Face Care > Moisturisers").
+Subcategories covered:
+- Skincare: Face Care, Cleansers, Moisturisers, Serums, Sunscreen, Body Care
+- Cosmetics: Beauty & Lifestyle, Cosmetics
+- Hair & Body: Hair Care, Shampoo & Conditioner, Treatments & Masks, Body Care, Bath & Shower, Deodorants
+- Supplements: Vitamins & Supplements, Food & Drink, Sports
 """
 
 import csv
@@ -15,161 +18,131 @@ from collections import Counter
 INPUT_CSV = "storage/app/imports/mydawa-products-scraped.csv"
 OUTPUT_CSV = "storage/app/imports/mydawa-products-scraped.csv"
 
-# Subcategory mapping based on URL path segments
-URL_SUBCATEGORY_MAP = {
-    # Skincare subcategories
-    'face-care': 'Face Care',
-    'cleansers': 'Cleansers',
-    'moisturisers': 'Moisturisers',
-    'serums': 'Serums',
-    'sunscreen': 'Sunscreen',
-    'body-care': 'Body Care',
-    'face-creams': 'Face Care',
-    'face-wash': 'Cleansers',
-    'skin-care': 'Face Care',
-    # Hair & Body subcategories
-    'hair-care': 'Hair Care',
-    'shampoo': 'Shampoo & Conditioner',
-    'conditioner': 'Shampoo & Conditioner',
-    'treatments': 'Treatments & Masks',
-    'masks': 'Treatments & Masks',
-    'bath': 'Bath & Shower',
-    'shower': 'Bath & Shower',
-    'deodorant': 'Deodorants',
-    'body-wash': 'Body Care',
-    'soap': 'Body Care',
-    'baby-wash': 'Bath & Shower',
-    'baby-soap': 'Body Care',
-    'baby-lotion': 'Body Care',
-    'baby-cream': 'Body Care',
-    'baby-oil': 'Body Care',
-    # Supplements subcategories
-    'supplements': 'Vitamins & Supplements',
-    'nutrition': 'Food & Drink',
-    'mens-health': 'Vitamins & Supplements',
-    'glutathione': 'Vitamins & Supplements',
-    'magnesium': 'Vitamins & Supplements',
-    'menopause': 'Vitamins & Supplements',
-    # Cosmetics subcategories
-    'make-up': 'Cosmetics',
-    'lip-care': 'Cosmetics',
-    'lip': 'Cosmetics',
+VALID_SUBCATEGORIES = {
+    'Skincare': ['Face Care', 'Cleansers', 'Moisturisers', 'Serums', 'Sunscreen', 'Body Care'],
+    'Hair & Body': ['Hair Care', 'Shampoo & Conditioner', 'Treatments & Masks', 'Body Care', 'Bath & Shower', 'Deodorants'],
+    'Supplements': ['Vitamins & Supplements', 'Food & Drink', 'Sports'],
+    'Cosmetics': ['Beauty & Lifestyle', 'Cosmetics'],
 }
 
-# Subcategory mapping based on product name keywords
-NAME_SUBCATEGORY_MAP = {
-    # Skincare
-    'cleanser': 'Cleansers',
-    'cleansing': 'Cleansers',
-    'wash': 'Cleansers',
-    'serum': 'Serums',
-    'moisturiser': 'Moisturisers',
-    'moisturizing': 'Moisturisers',
-    'moisturising': 'Moisturisers',
-    'cream': 'Moisturisers',
-    'lotion': 'Moisturisers',
-    'sunscreen': 'Sunscreen',
-    'spf': 'Sunscreen',
-    'sun': 'Sunscreen',
+# Name keyword -> (main_category, subcategory)
+# Check longer/more specific keywords first
+NAME_KEYWORDS = [
+    # === SKINCARE (non-baby) ===
+    (['cleanser', 'cleansing', 'face wash', 'facewash', 'micellar', 'foam cleanser'], 'Skincare', 'Cleansers'),
+    (['serum'], 'Skincare', 'Serums'),
+    (['moisturiser', 'moisturizing', 'moisturising', 'moisturizer', 'night cream', 'day cream', 'face cream', 'balm'], 'Skincare', 'Moisturisers'),
+    (['sunscreen', 'spf', 'sunblock', 'sun care'], 'Skincare', 'Sunscreen'),
+    (['body lotion', 'body cream', 'body butter'], 'Skincare', 'Body Care'),
+    (['face', 'skin', 'pigment', 'anti-aging', 'antiageing', 'acne', 'blemish', 'rosacea', 'eczema', 'psoriasis'], 'Skincare', 'Face Care'),
+
+    # === HAIR & BODY ===
+    # Baby products (hair & body care)
+    (['baby lotion', 'baby cream', 'baby oil', 'baby jelly', 'petroleum jelly'], 'Hair & Body', 'Body Care'),
+    (['baby powder', 'baby balm'], 'Hair & Body', 'Body Care'),
+    # Hair Care
+    (['hair care'], 'Hair & Body', 'Hair Care'),
+    (['shampoo'], 'Hair & Body', 'Shampoo & Conditioner'),
+    (['conditioner'], 'Hair & Body', 'Shampoo & Conditioner'),
+    (['hair mask', 'hair treatment'], 'Hair & Body', 'Treatments & Masks'),
+    # Body Care
+    (['body wash', 'body soap', 'body wash'], 'Hair & Body', 'Body Care'),
+    (['deodorant'], 'Hair & Body', 'Deodorants'),
+    # Bath & Shower
+    (['bath', 'shower', 'bubble bath'], 'Hair & Body', 'Bath & Shower'),
+    # General baby -> Body Care
+    (['baby'], 'Hair & Body', 'Body Care'),
+
+    # === SUPPLEMENTS ===
+    (['vitamin', 'glutathione', 'magnesium', 'omega', 'fish oil', 'probiotic', 'mineral', 'capsule', 'tablet'], 'Supplements', 'Vitamins & Supplements'),
+    (['supplement'], 'Supplements', 'Vitamins & Supplements'),
+    (['formula', 'milk', 'nutrition', 'food', 'meal'], 'Supplements', 'Food & Drink'),
+    (['sports', 'protein', 'workout', 'fitness'], 'Supplements', 'Sports'),
+
+    # === COSMETICS ===
+    (['lip', 'gloss', 'makeup', 'make-up', 'cosmetic'], 'Cosmetics', 'Cosmetics'),
+    (['beauty', 'lifestyle'], 'Cosmetics', 'Beauty & Lifestyle'),
+]
+
+# URL path segment -> (main_category, subcategory)
+URL_PATH_KEYWORDS = [
+    # Skincare (non-baby paths only)
+    (['face-care'], 'Skincare', 'Face Care'),
+    (['cleansers'], 'Skincare', 'Cleansers'),
+    (['moisturisers'], 'Skincare', 'Moisturisers'),
+    (['serums'], 'Skincare', 'Serums'),
+    (['sunscreen'], 'Skincare', 'Sunscreen'),
     # Hair & Body
-    'shampoo': 'Shampoo & Conditioner',
-    'conditioner': 'Shampoo & Conditioner',
-    'soap': 'Body Care',
-    'body wash': 'Body Care',
-    'body-care': 'Body Care',
-    'baby': 'Bath & Shower',
-    'bath': 'Bath & Shower',
-    'hair': 'Hair Care',
+    (['hair-care'], 'Hair & Body', 'Hair Care'),
+    (['shampoo'], 'Hair & Body', 'Shampoo & Conditioner'),
+    (['conditioner'], 'Hair & Body', 'Shampoo & Conditioner'),
+    (['treatments', 'masks'], 'Hair & Body', 'Treatments & Masks'),
+    (['bath', 'shower'], 'Hair & Body', 'Bath & Shower'),
+    (['deodorant'], 'Hair & Body', 'Deodorants'),
+    (['body-wash', 'soap'], 'Hair & Body', 'Body Care'),
     # Supplements
-    'vitamin': 'Vitamins & Supplements',
-    'supplement': 'Vitamins & Supplements',
-    'capsule': 'Vitamins & Supplements',
-    'tablet': 'Vitamins & Supplements',
-    'formula': 'Food & Drink',
+    (['supplements'], 'Supplements', 'Vitamins & Supplements'),
+    (['nutrition'], 'Supplements', 'Food & Drink'),
+    (['mens-health', 'glutathione', 'magnesium', 'menopause'], 'Supplements', 'Vitamins & Supplements'),
     # Cosmetics
-    'lip': 'Cosmetics',
-    'gloss': 'Cosmetics',
-    'makeup': 'Cosmetics',
-    'make-up': 'Cosmetics',
-    'cosmetic': 'Cosmetics',
-}
+    (['make-up', 'lip-care', 'lip'], 'Cosmetics', 'Cosmetics'),
+]
 
-CATEGORY_SUBCATEGORIES = {
-    'Skincare': [
-        'Face Care', 'Cleansers', 'Moisturisers', 'Serums', 'Sunscreen', 'Body Care'
-    ],
-    'Hair & Body': [
-        'Hair Care', 'Shampoo & Conditioner', 'Treatments & Masks',
-        'Body Care', 'Bath & Shower', 'Deodorants'
-    ],
-    'Supplements': [
-        'Vitamins & Supplements', 'Food & Drink', 'Sports'
-    ],
-    'Cosmetics': [
-        'Beauty & Lifestyle', 'Cosmetics'
-    ],
+DEFAULT_MAP = {
+    'Skincare': 'Face Care',
+    'Hair & Body': 'Body Care',
+    'Supplements': 'Vitamins & Supplements',
+    'Cosmetics': 'Cosmetics',
 }
 
 
 def classify_product(url, name, current_category):
     """Classify a product into category and subcategory based on URL and name."""
-    name_lower = name.lower()
+    name_lower = name.lower().strip()
     parsed = urlparse(url)
     path_parts = [p.lower() for p in parsed.path.split('/') if p]
-    # path: /products/{category1}/{category2}/{product-slug}
 
-    # Determine main category
+    # Determine main category from current_category (strip any existing subcategory)
+    main_cat = 'Skincare'
     if current_category:
-        main_cat = current_category
-    else:
-        main_cat = 'Skincare'  # default
+        parts = [p.strip() for p in current_category.split('>')]
+        if parts[0] in VALID_SUBCATEGORIES:
+            main_cat = parts[0]
 
-    # Determine subcategory from URL path
     subcat = None
-    if len(path_parts) >= 3:
-        # path_parts[1] = first level category, path_parts[2] = second level
-        for i, part in enumerate(path_parts[1:], start=1):
-            if part in URL_SUBCATEGORY_MAP:
-                subcat = URL_SUBCATEGORY_MAP[part]
-                break
-            # Also check partial matches
-            for kw, mapped in URL_SUBCATEGORY_MAP.items():
-                if kw in part:
-                    subcat = mapped
+
+    # Step 1: Check product name keywords first (most reliable)
+    for keywords, cat, sub in NAME_KEYWORDS:
+        if any(kw in name_lower for kw in keywords):
+            main_cat = cat
+            subcat = sub
+            break
+
+    # Step 2: If not found from name, check URL path segments
+    if not subcat:
+        for part in path_parts:
+            for keywords, cat, sub in URL_PATH_KEYWORDS:
+                if any(kw == part or kw in part for kw in keywords):
+                    main_cat = cat
+                    subcat = sub
                     break
             if subcat:
                 break
 
-    # If not found from URL, check name keywords
-    if not subcat:
-        for kw, mapped in NAME_SUBCATEGORY_MAP.items():
-            if kw in name_lower:
-                subcat = mapped
-                break
-
-    # Validate subcategory belongs to the main category
-    valid_subcats = CATEGORY_SUBCATEGORIES.get(main_cat, [])
+    # Step 3: Validate subcategory belongs to the main category
+    valid_subcats = VALID_SUBCATEGORIES.get(main_cat, [])
     if subcat and subcat not in valid_subcats:
-        # Try to find a valid subcategory for this main category
         subcat = None
         for valid in valid_subcats:
-            if valid.lower() in name_lower or any(
-                kw in name_lower for kw in valid.lower().split()
-            ):
+            if valid.lower() in name_lower:
                 subcat = valid
                 break
 
-    # Default subcategory if none found
+    # Step 4: Default subcategory
     if not subcat:
-        default_map = {
-            'Skincare': 'Face Care',
-            'Hair & Body': 'Body Care',
-            'Supplements': 'Vitamins & Supplements',
-            'Cosmetics': 'Cosmetics',
-        }
-        subcat = default_map.get(main_cat, 'Face Care')
+        subcat = DEFAULT_MAP.get(main_cat, 'Face Care')
 
-    # Build source_category string like "Skincare > Face Care > Moisturisers"
+    # Build source_category string like "Skincare > Face Care"
     source_category = f"{main_cat} > {subcat}"
     return main_cat, source_category, subcat
 
@@ -193,7 +166,7 @@ def main():
         )
 
         row['Categories'] = source_category
-        row['source_category'] = subcat  # store subcategory separately
+        row['source_category'] = subcat
         updated += 1
 
     with open(OUTPUT_CSV, 'w', newline='', encoding='utf-8') as f:

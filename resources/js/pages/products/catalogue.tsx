@@ -1,4 +1,5 @@
-import { Head, Link, useMemo, useState, usePage } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
+import { useMemo, useState } from 'react';
 import {
     ArrowRight,
     Leaf,
