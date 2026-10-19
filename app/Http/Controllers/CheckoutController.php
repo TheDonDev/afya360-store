@@ -366,4 +366,21 @@ class CheckoutController extends Controller
             Log::error('WhatsApp notification failed: ' . $e->getMessage());
         }
     }
+
+    public function visaSuccess(Order $order): RedirectResponse
+    {
+        if ($order->payment_status === 'paid') {
+            return to_route('checkout.confirmation', $order->reference);
+        }
+
+        // Mark as paid (sandbox simulation)
+        $order->update([
+            'payment_status' => 'paid',
+            'status' => 'processing',
+        ]);
+
+        $this->sendWhatsappNotification($order, "💳 *Visa Payment Received*\n\n*Order:* {$order->order_number}\n*Customer:* {$order->customer_name}\n*Phone:* {$order->customer_phone}\n*Amount:* KSh ".number_format((float) $order->subtotal, 2)."\n*Status:* Payment confirmed via Visa\n\nPlease proceed with order fulfillment.");
+
+        return to_route('checkout.confirmation', $order->reference);
+    }
 }
