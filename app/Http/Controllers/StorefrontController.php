@@ -36,6 +36,34 @@ class StorefrontController extends Controller
         ]);
     }
 
+    public function catalogue(): Response
+    {
+        $products = Product::query()
+            ->with('category:id,name,slug')
+            ->where('is_active', true)
+            ->where('catalog_visibility', 'visible')
+            ->orderBy('name')
+            ->get()
+            ->map(fn (Product $product): array => [
+                'id' => $product->id,
+                'slug' => $product->slug,
+                'name' => $product->name,
+                'brand' => $product->brand ?: $product->category->name,
+                'category' => $product->category->name,
+                'source_category' => $product->source_category,
+                'price' => (float) $product->price,
+                'image' => $product->image_url,
+                'label' => $product->badge,
+                'stock_quantity' => $product->stock_quantity,
+                'stock_status' => $product->stock_status,
+            ])
+            ->values();
+
+        return Inertia::render('products/catalogue', [
+            'products' => $products,
+        ]);
+    }
+
     public function show(Product $product): Response
     {
         abort_unless(

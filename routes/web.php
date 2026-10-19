@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [StorefrontController::class, 'index'])
     ->name('home');
 
+Route::get('/products', [StorefrontController::class, 'catalogue'])
+    ->name('products.catalogue');
+
 Route::get('/products/{product:slug}', [
     StorefrontController::class,
     'show',

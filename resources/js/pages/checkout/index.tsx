@@ -17,7 +17,7 @@ type CheckoutForm = {
     delivery_address: string;
     delivery_area: string;
     delivery_notes: string;
-    payment_method: 'whatsapp';
+    payment_method: 'whatsapp' | 'visa';
     items: { id: number; quantity: number }[];
 };
 
@@ -355,37 +355,34 @@ export default function Checkout() {
                                             </span>
                                         </label>
 
-                                        <div
-                                            aria-disabled="true"
-                                            className="flex cursor-not-allowed items-start gap-3 border border-[#e3e0d8] bg-[#f7f5ef] p-4 opacity-75"
-                                        >
-                                            <input
-                                                type="radio"
-                                                name="payment_method_preview"
-                                                disabled
-                                                aria-label="Visa card payment coming soon"
-                                                className="mt-1 accent-[#244c3b]"
-                                            />
-                                            <CreditCard
-                                                size={19}
-                                                className="mt-0.5 shrink-0 text-[#59635d]"
-                                            />
-                                            <span>
-                                                <span className="flex flex-wrap items-center gap-2 text-sm font-semibold text-[#3d4942]">
-                                                    Bank card
-                                                    <span className="border border-[#d6d2c8] bg-white px-1.5 py-0.5 text-[9px] font-bold tracking-[0.08em] text-[#334b79]">
-                                                        VISA
-                                                    </span>
-                                                </span>
-                                                <span className="mt-1 block text-xs leading-5 text-[#77786e]">
-                                                    Visa will use a secure,
-                                                    provider-hosted payment page
-                                                    once the gateway is
-                                                    configured. Card details are
-                                                    never collected here.
-                                                </span>
-                                            </span>
-                                        </div>
+<label
+    className={`flex cursor-pointer items-start gap-3 border p-4 ${form.data.payment_method === 'visa' ? 'border-[#244c3b] bg-[#f3f6f1]' : 'border-[#e3e0d8] bg-[#fffdf9] hover:border-[#244c3b]'}`}
+>
+    <input
+        type="radio"
+        name="payment_method"
+        value="visa"
+        checked={form.data.payment_method === 'visa'}
+        onChange={() => form.setData('payment_method', 'visa')}
+        className="mt-1 accent-[#244c3b]"
+    />
+    <CreditCard
+        size={19}
+        className={`mt-0.5 shrink-0 ${form.data.payment_method === 'visa' ? 'text-[#244c3b]' : 'text-[#1f6b4a]'}`}
+    />
+    <span>
+        <span className="flex flex-wrap items-center gap-2 text-sm font-semibold text-[#244c3b]">
+            Bank card
+            <span className="border border-[#d6d2c8] bg-white px-1.5 py-0.5 text-[9px] font-bold tracking-[0.08em] text-[#334b79]">
+                VISA
+            </span>
+        </span>
+        <span className="mt-1 block text-xs leading-5 text-[#686b62]">
+            Secure, provider-hosted payment page.
+            Card details are never collected here.
+        </span>
+    </span>
+</label>
                                     </div>
                                 </section>
 

@@ -34,7 +34,7 @@ class CheckoutController extends Controller
             'delivery_address' => ['required', 'string', 'max:2000'],
             'delivery_area' => ['required', 'string', 'max:120'],
             'delivery_notes' => ['nullable', 'string', 'max:1000'],
-            'payment_method' => ['required', 'in:whatsapp'],
+            'payment_method' => ['required', 'in:whatsapp,visa'],
             'items' => ['required', 'array', 'min:1', 'max:50'],
             'items.*.id' => ['required', 'integer', 'distinct'],
             'items.*.quantity' => ['required', 'integer', 'min:1', 'max:1000'],

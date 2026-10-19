@@ -62,9 +62,8 @@ class MyDawaProductSeeder extends Seeder
                 );
 
                 if ($price <= 0) {
-                    throw new RuntimeException(
-                        "Invalid price for product: {$name}"
-                    );
+                    // Skip products with no price (out of stock items)
+                    continue;
                 }
 
                 $stockText = trim($row['Stock'] ?? '');
@@ -88,22 +87,34 @@ class MyDawaProductSeeder extends Seeder
                 $categoryText = strtolower($sourceCategory);
                 $nameText = strtolower($name);
 
-                if (str_contains($nameText, 'tilla hair')
-                    || str_contains($nameText, 'body care')) {
-                    $categorySlug = 'hair-body';
-                } elseif (str_contains($categoryText, 'make up')) {
-                    $categorySlug = 'cosmetics';
-                } elseif (
-                    str_contains($categoryText, 'supplements')
-                    || str_contains($categoryText, 'reproductive health')
-                    || str_contains($nameText, 'horny goat weed')
-                    || str_contains($nameText, 'glutathione')
-                    || str_contains($nameText, 'magnesium glycinate')
-                    || str_contains($nameText, 'menopause support')
-                ) {
-                    $categorySlug = 'supplements';
-                } else {
-                    $categorySlug = 'skincare';
+                // Map CSV categories to site category slugs
+                $categorySlugMap = [
+                    'skincare' => 'skincare',
+                    'cosmetics' => 'cosmetics',
+                    'hair & body' => 'hair-body',
+                    'supplements' => 'supplements',
+                ];
+                $categorySlug = $categorySlugMap[$categoryText] ?? null;
+
+                // Fallback: keyword-based mapping
+                if (!$categorySlug) {
+                    if (str_contains($nameText, 'tilla hair')
+                        || str_contains($nameText, 'body care')) {
+                        $categorySlug = 'hair-body';
+                    } elseif (str_contains($categoryText, 'make up')) {
+                        $categorySlug = 'cosmetics';
+                    } elseif (
+                        str_contains($categoryText, 'supplements')
+                        || str_contains($categoryText, 'reproductive health')
+                        || str_contains($nameText, 'horny goat weed')
+                        || str_contains($nameText, 'glutathione')
+                        || str_contains($nameText, 'magnesium glycinate')
+                        || str_contains($nameText, 'menopause support')
+                    ) {
+                        $categorySlug = 'supplements';
+                    } else {
+                        $categorySlug = 'skincare';
+                    }
                 }
 
                 $category = Category::where(

@@ -46,25 +46,37 @@ def fetch_html(url, retries=3):
     raise last_error
 
 
+def extract_jsonld_list(html):
+    """Extract all JSON-LD scripts from HTML."""
+    pattern = r'<script type="application/ld\+json">\s*(.*?)\s*</script>'
+    matches = re.findall(pattern, html, re.DOTALL)
+    results = []
+    for match in matches:
+        try:
+            results.append(json.loads(match))
+        except json.JSONDecodeError:
+            pass
+    return results
+
+
+def find_jsonld_by_type(jsonld_list, type_name):
+    """Find a JSON-LD object by @type."""
+    for item in jsonld_list:
+        if isinstance(item, dict) and item.get("@type") == type_name:
+            return item
+    return None
+
+
 def extract_jsonld(html, type_name="Product"):
     """Extract JSON-LD script content for a given @type."""
-    pattern = (
-        r'<script type="application/ld\+json">\s*'
-        r'(\{.*?"@type"\s*:\s*"' + type_name + r'".*?\})'
-        r'\s*</script>'
-    )
-    matches = re.findall(pattern, html, re.DOTALL)
-    if not matches:
-        return None
-    try:
-        return json.loads(matches[0])
-    except json.JSONDecodeError:
-        return None
+    jsonld_list = extract_jsonld_list(html)
+    return find_jsonld_by_type(jsonld_list, type_name)
 
 
 def extract_breadcrumbs(html):
     """Extract breadcrumb category path from JSON-LD."""
-    breadcrumbs = extract_jsonld(html, "BreadcrumbList")
+    jsonld_list = extract_jsonld_list(html)
+    breadcrumbs = find_jsonld_by_type(jsonld_list, "BreadcrumbList")
     if not breadcrumbs:
         return []
     items = breadcrumbs.get("itemListElement", [])
