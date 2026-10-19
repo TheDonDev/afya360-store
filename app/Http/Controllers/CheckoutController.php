@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -261,6 +262,8 @@ class CheckoutController extends Controller
                 'status' => 'processing',
                 'total' => $payload['amount'] ?? $order->subtotal,
             ]);
+
+            $this->sendWhatsappNotification($order, "💳 *Visa Payment Received*\n\n*Order:* {$order->order_number}\n*Customer:* {$order->customer_name}\n*Phone:* {$order->customer_phone}\n*Amount:* KSh ".number_format((float) $order->subtotal, 2)."\n*Status:* Payment confirmed via Visa\n\nPlease proceed with order fulfillment.");
         } elseif (in_array($status, ['failed', 'cancelled', 'declined'])) {
             $order->update([
                 'payment_status' => 'failed',
@@ -269,5 +272,98 @@ class CheckoutController extends Controller
         }
 
         return response()->json(['ok' => true]);
+    }
+
+    public function visaPaymentIntent(Request $request)
+    {
+        $validated = $request->validate([
+            'order_reference' => ['required', 'string'],
+            'order_number' => ['required', 'string'],
+            'amount' => ['required', 'numeric', 'min:0'],
+            'currency' => ['required', 'string', 'size:3'],
+            'environment' => ['required', 'string'],
+            'org_id' => ['required', 'string'],
+            'key_id' => ['required', 'string'],
+        ]);
+
+        $order = Order::where('reference', $validated['order_reference'])->first();
+
+        if (!$order) {
+            return response()->json(['error' => 'Order not found'], 404);
+        }
+
+        if ($order->payment_method !== 'visa') {
+            return response()->json(['error' => 'Order is not a Visa order'], 400);
+        }
+
+        $config = config('services.visa_gateway');
+
+        // Sandbox mode: simulate payment intent creation
+        // In production, this would call the Visa gateway API to create a payment intent
+        if ($config['environment'] === 'sandbox') {
+            // Simulate: redirect to a success page after a short delay
+            // The frontend will poll or redirect to the confirmation page
+            return response()->json([
+                'success' => true,
+                'payment_url' => route('checkout.visa.success', $order->reference),
+                'status' => 'pending',
+                'message' => 'Visa payment intent created (sandbox mode)',
+            ]);
+        }
+
+        // Production: call Visa gateway API
+        try {
+            $response = Http::post("{$config['base_url']}/payment-intents", [
+                'org_id' => $config['org_id'],
+                'key_id' => $config['key_id'],
+                'amount' => (int) ($validated['amount'] * 100),
+                'currency' => $validated['currency'],
+                'reference' => $validated['order_reference'],
+                'order_number' => $validated['order_number'],
+                'webhook_url' => route('checkout.visa.webhook'),
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                return response()->json([
+                    'success' => true,
+                    'payment_url' => $data['payment_url'] ?? null,
+                    'status' => $data['status'] ?? 'pending',
+                ]);
+            }
+
+            return response()->json([
+                'success' => false,
+                'error' => 'Gateway error',
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Visa payment intent error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    private function sendWhatsappNotification(Order $order, string $message): void
+    {
+        $phone = config('services.whatsapp.order_number', '0724151522');
+        $phone = preg_replace('/[^0-9]/', '', (string) $phone);
+        $phone = str_starts_with($phone, '0') ? '254'.substr($phone, 1) : $phone;
+
+        $query = http_build_query([
+            'text' => $message,
+        ], '', '&', PHP_QUERY_RFC1738);
+        $whatsappUrl = 'https://wa.me/'.$phone.'?'.$query;
+
+        try {
+            Http::get($whatsappUrl);
+            Log::info('WhatsApp notification sent to '.$phone, [
+                'order' => $order->order_number,
+                'message' => $message,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('WhatsApp notification failed: ' . $e->getMessage());
+        }
     }
 }

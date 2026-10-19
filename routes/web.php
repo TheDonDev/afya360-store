@@ -56,4 +56,9 @@ Route::post('/api/visa/payment-intent', [
     'visaPaymentIntent',
 ])->middleware('auth')->name('api.visa.payment-intent');
 
+Route::get('/checkout/visa/success/{order:reference}', [
+    CheckoutController::class,
+    'visaSuccess',
+])->name('checkout.visa.success');
+
 require __DIR__.'/settings.php';
