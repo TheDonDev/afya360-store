@@ -56,7 +56,7 @@ Route::post('/checkout/webhook/visa', [
 Route::post('/api/visa/payment-intent', [
     CheckoutController::class,
     'visaPaymentIntent',
-])->middleware('auth')->name('api.visa.payment-intent');
+])->name('api.visa.payment-intent');
 
 Route::get('/checkout/visa/success/{order:reference}', [
     CheckoutController::class,
