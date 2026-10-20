@@ -180,9 +180,9 @@ export default function TermsOfService() {
                                     href="mailto:support@afya360.co.ke"
                                     className="text-[#244c3b] hover:underline"
                                 >
-                                    support@afya360.co.ke
+                                    support@afya360.co.ke   
                                 </a>
-                                or WhatsApp{' '}
+                                    or WhatsApp{' '}
                                 <a
                                     href="https://wa.me/254724151522"
                                     className="text-[#244c3b] hover:underline"

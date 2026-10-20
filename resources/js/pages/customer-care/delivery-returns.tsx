@@ -1,8 +1,8 @@
 import { Head, Link } from '@inertiajs/react';
 import {
     ArrowLeft,
-    RefreshCw,
-    ShieldCheck,
+    ArrowRight,
+    RotateCcw,
     Truck,
 } from 'lucide-react';
 
@@ -117,7 +117,7 @@ export default function DeliveryReturns() {
                             <div className="space-y-6">
                                 <div className="flex items-start gap-3">
                                     <div className="h-10 w-10 rounded-full bg-[#e8eee7] flex items-center justify-center text-[#244c3b] shrink-0">
-                                        <RefreshCw size={20} strokeWidth={1.6} />
+                                        <RotateCcw size={20} strokeWidth={1.6} />
                                     </div>
                                     <div>
                                         <h3 className="font-semibold text-[#244c3b]">Returns & Exchanges</h3>

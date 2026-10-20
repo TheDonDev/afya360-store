@@ -2,6 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import {
     ArrowLeft,
     Leaf,
+    ArrowRight,
     ShieldCheck,
     Sparkles,
     Truck,

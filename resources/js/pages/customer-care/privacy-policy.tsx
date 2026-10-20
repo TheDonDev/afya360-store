@@ -1,9 +1,9 @@
 import { Head, Link } from '@inertiajs/react';
 import {
     ArrowLeft,
+    ArrowRight,
     Lock,
     ShieldCheck,
-    UserRound,
 } from 'lucide-react';
 
 export default function PrivacyPolicy() {
