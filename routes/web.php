@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\GoogleAuthController;
+use App\Http\Controllers\AiChatbotController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\StorefrontController;
@@ -82,5 +83,9 @@ Route::get('/customer-care/privacy-policy', function () {
 Route::get('/customer-care/terms-of-service', function () {
     return Inertia::render('customer-care/terms-of-service');
 })->name('customer-care.terms-of-service');
+
+// AI Chatbot API
+Route::post('/api/ai-chatbot/chat', [AiChatbotController::class, 'chat'])
+    ->name('api.ai-chatbot.chat');
 
 require __DIR__.'/settings.php';
