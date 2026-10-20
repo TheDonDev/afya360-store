@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useCart } from '@/components/storefront/cart-provider';
-import { AiChatbot } from '@/components/ai-chatbot/AiChatbot';
+import AiChatbot from '@/components/ai-chatbot/AiChatbot';
 
 type Category =
     | 'All'

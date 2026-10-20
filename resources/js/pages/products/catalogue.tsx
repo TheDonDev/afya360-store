@@ -12,7 +12,7 @@ import {
     X,
 } from 'lucide-react';
 import { useCart } from '@/components/storefront/cart-provider';
-import { AiChatbot } from '@/components/ai-chatbot/AiChatbot';
+import AiChatbot from '@/components/ai-chatbot/AiChatbot';
 
 type Category = 'All' | 'Skincare' | 'Cosmetics' | 'Hair & Body' | 'Supplements';
 
