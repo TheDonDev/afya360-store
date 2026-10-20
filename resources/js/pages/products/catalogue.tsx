@@ -2,8 +2,10 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import {
     ArrowRight,
+    Heart,
     Leaf,
     Menu,
+    Plus,
     Search,
     Sparkles,
     ShoppingBag,
